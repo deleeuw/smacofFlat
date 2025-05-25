@@ -1,3 +1,5 @@
+library(RSpectra)
+
 matrixPrint <- function(x,
                         digits = 6,
                         width = 8,
@@ -79,8 +81,9 @@ torgerson <- function(theData, ndim) {
   for (k in 1:ndat) {
     i <- theData[k, 1]
     j <- theData[k, 2]
-    dmat[i, j] <- dmat[j, i] <- theData[k, 3]^2
+    dmat[i, j] <- dmat[j, i] <- theData[k, 3]
   }
+  dmat <- dmat^2
   dr <- apply(dmat, 1, mean)
   dm <- mean(dmat)
   cmat <- -(dmat - outer(dr, dr, "+") + dm) / 2
@@ -102,4 +105,5 @@ fromMDSData <- function(theData) {
   }
   return(list(delta = as.dist(delta), weights = as.dist(weights)))
 }
+
 

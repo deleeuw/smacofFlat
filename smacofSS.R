@@ -17,20 +17,20 @@ morseData <- makeMDSData(morse)
 
 
 smacofSS <- function(theData,
-                     ndim = 2,
-                     xold = torgerson(theData, ndim),
-                     weighted = FALSE,
-                     ordinal = FALSE,
-                     ties = 2,
-                     itmax = 1000,
-                     eps = 1e-10,
-                     verbose = TRUE) {
+                     ndim,
+                     xold,
+                     weighted,
+                     ordinal,
+                     ties,
+                     itmax,
+                     eps,
+                     verbose) {
   if (!weighted && !ordinal) {
     return(
       smacofSSUR(
         theData,
         ndim = ndim,
-        xold = torgerson(theData, ndim),
+        xold = xold,
         itmax = itmax,
         eps = eps,
         verbose = verbose
@@ -42,7 +42,7 @@ smacofSS <- function(theData,
       smacofSSWR(
         theData,
         ndim = ndim,
-        xold = torgerson(theData, ndim),
+        xold = xold,
         itmax = itmax,
         eps = eps,
         verbose = verbose
@@ -54,7 +54,7 @@ smacofSS <- function(theData,
       smacofSSUO(
         theData,
         ndim = ndim,
-        xold = torgerson(theData, ndim),
+        xold = xold,
         ties = ties,
         itmax = itmax,
         eps = eps,
@@ -67,7 +67,7 @@ smacofSS <- function(theData,
       smacofSSWO(
         theData,
         ndim = ndim,
-        xold = torgerson(theData, ndim),
+        xold = xold,
         ties = ties,
         itmax = itmax,
         eps = eps,
@@ -78,11 +78,11 @@ smacofSS <- function(theData,
 }
 
 smacofSSUR <- function(theData,
-                       ndim = 2,
-                       xold = torgerson(theData, ndim),
-                       itmax = 1000,
-                       eps = 1e-10,
-                       verbose = TRUE) {
+                       ndim,
+                       xold,
+                       itmax,
+                       eps,
+                       verbose) {
   nobj <- nrow(xold)
   ndat <- nrow(theData)
   itel <- 1
@@ -154,11 +154,11 @@ smacofSSUR <- function(theData,
 }
 
 smacofSSWR <- function(theData,
-                       ndim = 2,
-                       xold = torgerson(theData, ndim),
-                       itmax = 1000,
-                       eps = 1e-10,
-                       verbose = TRUE) {
+                       ndim,
+                       xold,
+                       itmax,
+                       eps,
+                       verbose) {
   nobj <- nrow(xold)
   ndat <- nrow(theData)
   itel <- 1
@@ -237,12 +237,12 @@ smacofSSWR <- function(theData,
 }
 
 smacofSSUO <- function(theData,
-                       ndim = 2,
-                       xold = torgerson(theData, ndim),
-                       ties = 2,
-                       itmax = 1000,
-                       eps = 1e-10,
-                       verbose = TRUE) {
+                       ndim,
+                       xold,
+                       ties,
+                       itmax,
+                       eps,
+                       verbose) {
   nobj <- nrow(xold)
   ndat <- nrow(theData)
   itel <- 1
@@ -355,12 +355,12 @@ smacofSSUO <- function(theData,
 }
 
 smacofSSWO <- function(theData,
-                       ndim = 2,
-                       xold = torgerson(theData, ndim),
-                       ties = 2,
-                       itmax = 1000,
-                       eps = 1e-10,
-                       verbose = TRUE) {
+                       ndim,
+                       xold,
+                       ties,
+                       itmax,
+                       eps,
+                       verbose) {
   nobj <- nrow(xold)
   ndat <- nrow(theData)
   itel <- 1
