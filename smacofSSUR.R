@@ -1,3 +1,8 @@
+dyn.load("smacofStep.so")
+
+source("../smacofUtils.R")
+source("../smacofSSData.R")
+
 smacofSSUR <- function(theData,
                        ndim = 2,
                        xold = torgerson(theData, ndim),
