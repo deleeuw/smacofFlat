@@ -1,5 +1,6 @@
 ---
 title: Yet Another Smacof
+  - Square Symmetric Case
 author: 
       name: Jan de Leeuw
       orcid: 0000-0003-1420-1797
@@ -44,6 +45,13 @@ abstract: TBD
 ```{r loadpackages, echo = FALSE}
 suppressPackageStartupMessages(library(knitr, quietly = TRUE))
 suppressPackageStartupMessages(library(tinytex, quietly = TRUE))
+suppressPackageStartupMessages(library(microbenchmark, quietly = TRUE))
+suppressPackageStartupMessages(library(smacof, quietly = TRUE))
+```
+
+```{r loadsourses, echo = FALSE}
+source("smacofUtils.R")
+source("smacofSS.R")
 ```
 
 **Note:** This is a working manuscript which will be expanded/updated
@@ -56,4 +64,240 @@ appreciated, but is not required. The files can be found at
 
 # Introduction
 
-# Input
+# Data
+
+Start with an object of class *dist* containing dissimilarities. Here is a small example of order four.
+```{r small, echo = FALSE}
+small <- as.dist(matrix(
+  c(0, 1, 3, 2, 1, 0, 1, 3, 3, 1, 0, 1, 2, 3, 1, 0), 4, 4))
+print(small)
+```
+Turn this into MDS data with the utility *makeMDSData()*.
+```{r smalldata}
+smallData <- makeMDSData(small)
+print(smallData)
+```
+Note that the data in column *delta* are sorted, and that *blocks* has tie blocks. This is always
+the case, even for a metric MDS, because the information will be useful for plotting routines
+later on. Also, the *weights* are always there in some form, even if our MDS analysis will be
+unweighted.
+
+*makeMDSData()* can handle missing data and nontrivial weights. If our example is
+```{r smallmis, echo = FALSE}
+smallmis <- small
+smallmis[1] <- smallmis[3] <- NA
+print(smallmis) 
+```
+and we add weights, also of class *dist*,
+```{r smallweights, echo = FALSE}
+weights <- 1 / small
+weights[6] <- 0
+print(weights)
+```
+then our MDS data becomes
+```{r smalldatamis}
+smallData <- makeMDSData(smallmis, weights)
+print(smallData)
+```
+Missing data are coded as zero weights, or as dissimilarities and/or weights that are *NA*.
+Zero dissimilarities do not indicate missing data.
+
+These conventions make it possible to also handle rectangular off-diagonal data, such as
+```{r rect, echo = FALSE}
+m <- matrix(c(1, 3, 1, 1, 2, 1, 3, 3, 3, 1, 2, 3), 4, 3)
+rect <- matrix(0, 7, 7)
+rect[1:4, 5:7] <- m
+rect <- as.dist(rect + t(rect))
+weights <- matrix(0, 7, 7)
+weights[1:4, 5:7] <- 1
+weights <- as.dist(weights + t(weights))
+print(rect)
+print(weights)
+```
+Now *makeMDSData* gives
+```{r rectdata, echo = FALSE}
+rectData <- makeMDSData(rect, weights)
+print(rectData)
+```
+Handling rectangular data with square symmetric MDS is consequently possible, but it is inefficient
+and better to use the smacof programs specifically intended for rectangular data.
+
+It is of course also possible to construct MDS data sets of this form in other ways, and to edit
+MDS data sets. As long as the conventions are obeyed that no index pair $(i,j)$ occurs more than once, that the dissimilarities are sorted, and that the tie blocks faithfully reflect ties in the sorted dissimilarities. We do need $i\neq j$, but it is not necessary that always $i>j$.
+
+# Arguments
+
+The *smacofSS* function has the following arguments.
+
+1. *theData*, an MDS data structure.  
+2. *ndim*, dimensionality of MDS analysis.
+3. *xold*, initial configuration, an *nobj* by *ndim* matrix.
+4. *weighted*, TRUE/FALSE for weighted/unweighted least squares.
+5. *ordinal*, TRUE/FALSE for ordinal/numerical.
+6. *ties*, primary (1), secondary(2), or tertiary (3) approaches. 
+7. *itmax*, maximum number of iterations.
+8. *eps*, if loss changes less than *eps*, stop.
+9. *verbose*, TRUE/FALSE print iteration info to *stdout*.
+
+# Details
+
+None of the arguments has default values. Of course *ties* is relevant 
+only if *ordinal* is TRUE. And *weighted* is set to TRUE only if
+the numerical weights are different from unity (and if the data
+set is incomplete because of missing data). The terminology in
+*ties* refers to @deleeuw_A_77.
+
+# Value
+
+A list with elements
+
+1.  *data*, the input data structure, unmodified;
+2.  *conf*, the final configuration, an *nobj* by *ndim* matrix;
+3.  *loss*, the final loss function value;
+4.  *dist*, the final distances, an object of class *dist*;
+5.  *dhat*, the final disparities (if *ordinal* is FALSE these
+  are just normalized dissimilarities);
+6.  *itel*, the number of iterations.
+
+# Computational Details
+
+*smacofSS()* is a front end that reads the parameters of the problem and then calls
+one of four separate R programs. They are 
+
+1. *smacofSSUR()*, unweighted numerical;
+2. *smacofSSWR()*, weighted numerical;
+3. *smacofSSUO()*, unweighted ordinal;
+4. *smacofSSWO()*, weighted ordinal.
+
+Although using four separate programs obviously involves duplicating some code it does
+allow us to make the programs smaller and faster. For example, we are not forced to do
+weighted updates with unit weights in the unweighted case.
+
+*smacofSS()* is written using a combination of R and C. The smacof update in each iteration
+is handled in C, with separate routines *smacofStepUnweighted()* and *smacofStepWeighted()*.
+
+
+If *ordinal* is TRUE the monotone regression in each iteration
+uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()*
+algorithm is imbedded in three separate C routines *primaryApproach()*, *secondaryApproach()*,
+and *tertiaryApproach()*. The C code uses the .C()
+calling conventions and is otherwise not dependent on R in any way.
+
+Initial configurations can be chosen in many ways. Recommended is to use the
+*torgerson()* routine in *smacofUtils.R*. This is classical MDS, with the missing
+dissimilarities imputed using the average non-missing dissimilarity. The
+eigenvalues and eigenvectors are computed with *eigs-sym()* from the
+*RSpectra* package (@qiu_mei_24).
+
+\sectionbreak
+```{r}
+xinit <- torgerson(morseData, 2)
+```
+
+```{r microbenchmark_num, cache = TRUE, echo = FALSE}
+mnum <- microbenchmark(
+smacofSym(morse, type = "ratio", eps = 1e-10, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = FALSE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+```
+
+```{r microbenchmark_ord1, cache = TRUE, echo = FALSE}
+mord1 <- microbenchmark(
+smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+```
+```{r microbenchmark_ord2, cache = TRUE, echo = FALSE}
+mord2 <- microbenchmark(
+smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
+```
+```{r microbenchmark_ord3, cache = TRUE, echo = FALSE}
+mord3 <- microbenchmark(
+smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
+```
+
+```{r echo = FALSE}
+a <- median(mnum$time[1:100])
+b <- median(mnum$time[101:200])
+cat("mnum ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+a <- median(mord1$time[1:100])
+b <- median(mord1$time[101:200])
+cat("mord1 ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+a <- median(mord2$time[1:100])
+b <- median(mord2$time[101:200])
+cat("mord2 ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+a <- median(mord3$time[1:100])
+b <- median(mord3$time[101:200])
+cat("mord3 ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+```
+
+```{r wgthnum, cache = TRUE, echo = FALSE}
+mnumw <- microbenchmark(
+smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = FALSE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+```
+
+```{r wgthord1, cache = TRUE, echo = FALSE}
+mord1w <- microbenchmark(
+smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+```
+
+```{r wgthord2, cache = TRUE, echo = FALSE}
+mord2w <- microbenchmark(
+smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
+```
+```{r wgthord3, cache = TRUE, echo = FALSE}
+mord3w <- microbenchmark(
+smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
+smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
+```
+```{r echo = FALSE}
+a <- median(mnumw$time[1:100])
+b <- median(mnumw$time[101:200])
+cat("mnumw ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+a <- median(mord1w$time[1:100])
+b <- median(mord1w$time[101:200])
+cat("mord1w ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+a <- median(mord2w$time[1:100])
+b <- median(mord2w$time[101:200])
+cat("mord2w ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+a <- median(mord3w$time[1:100])
+b <- median(mord3w$time[101:200])
+cat("mord3w ",
+    formatC(a, format = "d", width = 10),
+    formatC(b, format = "d", width = 10),
+    formatC(a / b, format = "f", digits = 10),
+    "\n")
+```
+
+# References

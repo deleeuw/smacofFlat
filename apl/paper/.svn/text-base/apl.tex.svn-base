@@ -1,0 +1,655 @@
+ \documentclass[11pt]{amsart}
+%
+%\def\lu{}
+\def\tx{}
+%\def\pa{}
+%
+\newif\iflu
+\ifx\lu\undefined
+\lufalse
+\else
+\lutrue
+\fi
+%
+\newif\iftx
+\ifx\tx\undefined
+\txfalse
+\else
+\txtrue
+\fi
+%
+\newif\ifpa
+\ifx\pa\undefined
+\pafalse
+\else
+\patrue
+\fi
+%
+\def\myfont{\textsc{Computer Modern}}
+\usepackage[T1]{fontenc}
+\iflu
+\usepackage[full]{textcomp} % to get the right copyright, etc.
+\usepackage[altbullet]{lucidabr}     % get larger bullet
+\DeclareEncodingSubset{TS1}{hlh}{1}  % including \oldstylenums
+\def\myfont{\textsc{Lucida Bright}}
+\fi
+%
+\ifpa
+\usepackage[full]{textcomp} % to get the right copyright, etc.
+\usepackage{pxfonts}
+\def\myfont{\textsc{Palatino}}
+\fi
+%
+\iftx
+\usepackage[full]{textcomp}
+\usepackage{mathptmx}
+\usepackage[scaled=.90]{helvet}
+\usepackage{courier}
+\def\myfont{\textsc{Times Roman}}
+\fi
+%
+\usepackage{ifpdf}
+\ifpdf
+\usepackage[pdftex]{color,graphicx,hyperref}
+\else
+\usepackage{color,graphicx,hyperref}
+\fi
+%
+\usepackage{amssymb,latexsym,amsxtra,upref}
+\usepackage{float,fancybox,fancyvrb,verbatim,listings,asymptote,epstopdf,subfigure,calc}
+\usepackage[square]{natbib}
+\usepackage[latin1]{inputenc}
+\usepackage{saxpsa}
+%
+%\usepackage[draft]{pdfdraftcopy}
+%\draftstring{FROM JAN'S DESK}
+%\definecolor{thisone}{rgb}{1,.7,.7}
+%\draftcolor{thisone}
+%
+\makeindex
+%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+%
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+%\renewcommand{\theremark}{}
+\newtheorem{result}{Result}
+%\renewcommand{\theresult}{}
+%
+\newtheorem{example}{Example}[section]
+\newtheorem{counter}{Counterexample}[section]
+%
+\newcounter{hours}
+\newcounter{minutes}
+\newcommand{\defi}{\mathop{=}\limits^{\Delta}}      % mathop for define
+\newcommand{\argmin}[1]{\mathop{\mathbf{argmin}}\limits_{#1}}      % mathop for argmin
+\newcommand{\argmax}[1]{\mathop{\mathbf{argmax}}\limits_{#1}}      % mathop for argmin
+\newcommand{\ip}[2]{\langle{#1},{#2}\rangle}
+\newcommand{\matdim}[2]{\mathop{#1}\limits_{#2}}
+\newcommand{\inlaw}{\mathop{\Rightarrow}\limits^{\mathcal{L}}}
+\newcommand{\inprob}{\mathop{\Rightarrow}\limits^{\mathcal{P}}}
+\newcommand{\pardev}[2]{\mathop{\frac{\partial{#1}}{\partial{#2}}}}
+\newcommand\printtime{\setcounter{hours}{\time/60}%
+	\setcounter{minutes}{\time-\value{hours}*60}%
+	\thehours h \theminutes min}
+\newcommand{\indexkeywords}[1]{\index{#1@\textit{\textcolor{red}{#1}}}}%
+\newcommand{\doublesum}[1]{\mathop{\sum\sum}\limits_{#1}}
+\newcommand{\tR}{\texttt{R}}
+\newcommand{\tA}{\texttt{APL}}
+\newcommand{\tT}[1]{\texttt{#1}}
+\newcommand{\tRc}[1]{\lstinline{#1}}
+\newcommand{\tAc}[1]{{\apl{#1}}}
+
+\lstloadlanguages{R}
+\lstdefinelanguage{RPlus}[]{R}{%
+morekeywords={acf,ar,arima,arima.sim,colMeans,colSums,is.na,is.null,%
+mapply,ms,na.rm,nlmin,replicate,row.names,rowMeans,rowSums,seasonal,%
+sys.time,system.time,ts.plot,which.max,which.min,as.vector,NULL},%
+deletekeywords={c},%
+alsoletter={.\%},%
+alsoother={:_\$}}
+\lstset{language=RPlus,%
+extendedchars=true,%
+basicstyle=\small\ttfamily,%
+stringstyle=\color{blue},%
+showstringspaces=false,%
+xleftmargin=4ex,%
+numbers=left,%
+numberstyle=\tiny,%
+stepnumber=1,%
+firstnumber=1,%
+breaklines=true,%
+keywordstyle=\color{red}\mdseries\underbar,%
+commentstyle=\color{green}\textsl,%
+index=[1][keywords],%
+indexstyle=[1]\indexkeywords%
+}
+%
+\parskip = 0.1in
+\parindent = 0.0in
+%
+\renewcommand{\baselinestretch}{1.25}
+
+\begin{document}
+\title{APL in R}
+\author{Jan de Leeuw}
+\address{Department of Statistics\\ University of California\\ Los Angeles, CA 90095-1554}
+\email[Jan de Leeuw]{deleeuw@stat.ucla.edu}
+\urladdr[Jan de Leeuw]{http://gifi.stat.ucla.edu}
+%\thanks{}
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+\date{\today\ ---\ \printtime\ --- \ Typeset in\ \myfont}
+%\keywords{Binomials, Normals, \LaTeX}
+%\subjclass[2000]{00A00} % see http://www.ams.org/msc
+\begin{abstract}
+\texttt{R} versions of the array manipulation functions of \texttt{APL}
+are given. We do not translate the system functions or other parts of the
+runtime. Also, the current version has no nested arrays.
+\end{abstract}
+\maketitle
+\tableofcontents
+\newpage
+%\listoftables
+%\listoffigures
+\section{Introduction}
+\tA\ was introduced by~\citet{iverson_62}. It is an array language, with many functions to manipulate multidimensional arrays. \tR\ also has multidimensional arrays, but far fewer functions to work with them.
+
+In \tR\ there are no scalars, there are vectors of length one. For a vector \tT{x}
+in \tR\ we have \tRc{dim(x)} equal to \tT{NULL} and \tRc{length(x)>0}. For an array, including a matrix,
+we have \tRc{length(dim(x))>0}. \tA\ is an array
+language, which means everything is an array. For each array both the shape \tAc{\qrho A} and the rank
+\tAc{\qrho\qrho A} are defined. Scalars are arrays with shape equal to one, vectors are arrays with
+rank equal to one.
+
+In 1994 I coded most \tA\ array operations in \tT{XLISP-STAT}. The code is still available at \href{http://idisk.mac.com/jdeleeuw-Public/utilities/apl/array.lsp}{http://idisk.mac.com/jdeleeuw-Public/utilities/apl/array.lsp}. There are some important differences
+between the \texttt{R} and Lisp versions, because \texttt{Lisp} and \tA\ both have
+\texttt{C}'s row-major ordering, while \tR\ (like \texttt{Matlab}) has \texttt{Fortran}'s
+column-major ordering in the array layout. The \tR\ version of
+\tA\ uses column-major ordering.
+By slightly changing the two basic building blocks of our code, the \tRc{aplDecode()} and
+\tRc{aplEncode()} functions, it would be easy to choose between row-major
+and column-major layouts. But this would make it more complicated to use the code
+with the rest of \tR.
+
+Because of layout, the two arrays \tAc{A\qlarrow 3 3 3\qrho\qiota 27} and
+\tRc{array(1:27,rep(3,3))} are different.
+But what is really helpful in linking the two environments is that
+\tAc{,A\qlarrow 3 3 3\qrho\qiota 27} and \tRc{as.vector(array(1:27,rep(3,3))}, which both ravel the array to a vector, give the same result, the vector \tAc{\qiota 27} or \tRc{1:27}. This is, of course, because
+ravelling an array is the inverse of reshaping a vector.
+
+Most of the functions in \tR\ are written with arrays of numbers in mind. Most of them will work for array with elements of type logical, and quite a few of them will also work for arrays of type character. We have to keep in mind, however, that \tA\ and \tR\ treat character arrays quite differently. In \tR\ we have \tRc{length("aa")} equal to
+1, because \tRc{"aa"} is a vector with as its single element the string \tRc{"aa"}. \tR\ has no
+primitive character type, characters are just strings which happen to have only one character in them.
+In \tA\ strings themselves are vectors of characters, and \tAc{\qrho "aa"} is 2. In \tR\ we can say
+\tRc{a<-array("aa",c(2,2,2))}, but in \tA\ this gives a domain error. In \tA\ we can say \tAc{2 2 2\qrho"aa"},
+which gives the same result as \tAc{2 2 2\qrho"a"} or \tAc{2 2 2\qrho'a'}.
+
+In this version of the code we have \emph{not} implemented the \emph{nested arrays} of \texttt{APL-2}.
+Nesting gives every array \tAc{A} not just a shape \tAc{\qrho A} and a rank \tAc{\qrho\qrho A},
+but also a depth. The depth of an array of numbers of characters is one, the depth
+of a nested array is the maximum depth of its elements.
+
+There are many dialects of \tA, and quite a few languages derived from \tA, such as \texttt{A+} and \texttt{J}.
+For \tT{APL-I} we use~\citet{helzer_89} and for \tT{APL2} we use~\citet{apl2_88} and~\citet{aplx_07}.
+
+\section{Functions}
+
+\subsection{Compress}\quad
+Compress~\citep[p. 91--92]{apl2_88} is Replicate \tAc{L/R} in the special case that \tAc{L} is binary. So look under Replicate.
+
+\subsection{Decode}
+\subsubsection{Definition}
+\emph{Decode}~\citep[p. 94]{apl2_88} The dyadic operator \tAc{L\qdtack R} is known as \emph{Base Value}~\citep[p. 17-21]{helzer_89} in \texttt{APL-I}.
+
+If \tAc{L} is scalar and \tAc{R} is a vector, then \tAc{L\qdtack R} is the polynomial
+\(r_1x^{m-1}+r_{2}x^{m-2}+\cdots+r_m\) evaluated at \tAc{L}. This means that if
+the \(r_i\) are nonnegative integers less than \tAc{L}, then \tAc{L\qdtack R} gives the
+base-10 equivalent of the base-\tAc{L} number \tAc{R}.
+
+If the arguments \texttt{L} and \texttt{R} are vectors of the
+same length. In the array context, decode returns the index of element \lstinline{x[b]} in an array
+\lstinline{x} with \lstinline{dim(x)=a}. Obviously the \texttt{R} implementation, which uses
+colum-major ordering, will give results different from the \tA\ implementation. In \tA\
+the expression \tAc{3 3 3\qdtack 1 2 3} evaluates to 18, while \tRc{aplDecode(1:3,rep(3,3))} gives 22.
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplDecode<-function(ind,base) {
+    if (length(base) == 1)
+        base<-array(base,aplShape(ind))
+    b<-c(1,butLast(cumprod(base)))
+    return(1+sum(b*(ind-1)))
+}
+\end{lstlisting}
+\subsubsection{}\quad
+
+\subsection{Drop}\quad
+\subsubsection{Definition}
+
+A
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplDrop<-function(a,x,drop=FALSE) {
+sa<-aplShape(a); ra<-aplRank(a)
+y<-as.list(rep(0,ra))
+for (i in 1:ra) {
+    ss<-sa[i]; xx<-x[i]; sx<-ss-xx
+    if (xx >= 0) y[[i]]<-(xx+1):ss
+    if (xx < 0) y[[i]]<-1:sx
+    }
+return(aplSelect(a,y,drop))
+}
+\end{lstlisting}
+
+\subsection{Encode}
+Encode \tAc{A\qutack B} is the inverse of Decode. In \texttt{APL-I} it is known as Representation~\citep[17--21]{helzer_89}. It takes a radix vector \tAc{A} and a number \tAc{B} and
+returns the array indices corresponding to cell \tAc{B} in an array with a \tAc{\qrho} of \tAc{A}.
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplEncode<-function(rep,base) {
+    b<-c(1,butLast(cumprod(base)))
+    r<-rep(0,length(b)); s<-rep-1
+    for (j in length(base):1) {
+        r[j]<-s%/%b[j]
+        s<-s-r[j]*b[j]
+    }
+return(1+r)
+}
+\end{lstlisting}
+
+\subsection{Expand}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplEXV<-function(x,y) {
+z<-rep(0,length(y))
+m<-which(y)
+if (length(m) != length(x))
+    stop("Incorrect vector length in aplEXV")
+z[which(y)]<-x
+return(z)
+}
+\end{lstlisting}
+\begin{lstlisting}
+aplExpand<-function(x,y,axis=1) {
+    if (is.vector(x)) return(aplEXV(x,y))
+    d<-dim(x); m<-which(y); e<-d; e[axis]<-m
+    if (m != d[axis])
+        stop("Incorrect dimension length in aplEX")
+    z<-array(0,e)
+    apply(z,(1:n)[-axis],function(i) z[i]<-x[i])
+}
+\end{lstlisting}
+
+\subsection{Inner Product}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplIPV<-function(x,y,f="*",g="+"){
+if (length(x) != length(y))
+    stop("Incorrect vector length in aplIPV")
+if (length(x) == 0) return(x)
+z<-match.fun(f)(x,y)
+return(aplRDV(z,g))
+}
+\end{lstlisting}
+\begin{lstlisting}
+aplInnerProduct<-function(a,b,f="*",g="+") {
+sa<-aplShape(a); sb<-aplShape(b)
+ra<-aplRank(a); rb<-aplRank(b)
+ia<-1:(ra-1); ib<-(ra-1)+(1:(rb-1))
+ff<-match.fun(f); gg<-match.fun(g)
+ns<-last(sa); nt<-first(sb)
+if (ns != nt)
+    stop("non-compatible array dimensions in aplInner")
+sz<-c(butLast(sa),butFirst(sb)); nz<-prod(sz)
+z<-array(0,sz)
+for (i in 1:nz) {
+    ivec<-aplEncode(i,sz)
+    for (j in 1:ns) {
+        aa<-a[aplDecode(c(ivec[ia],j),sa)]
+        bb<-b[aplDecode(c(j,ivec[ib]),sb)]
+        z[i]<-gg(z[i],ff(aa,bb))
+        }
+    }
+return(z)
+}
+\end{lstlisting}
+
+\subsection{Join}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplJN<-function(a,b,k) {
+    if (is.vector(a) && is.vector(b)) return(c(a,b))
+    sa<-aplShape(a); sb<-aplShape(b); ra<-aplRank(a); rb<-aplRank(b)
+    if (ra != rb)
+        stop("Rank error in aplJN")
+    if (!identical(sa[-k],sb[-k]))
+        stop("Shape error in aplJN")
+    sz<-sa; sz[k]<-sz[k]+sb[k]; nz<-prod(sz); u<-unit(k,ra)
+    z<-array(0,sz)
+    for (i in 1:nz) {
+        ivec<-aplEncode(i,sz)
+        if (ivec[k] <= sa[k]) z[i]<-a[aplDecode(ivec,sa)]
+            else z[i]<-b[aplDecode(ivec-sa[k]*u,sb)]
+        }
+return(z)
+}
+\end{lstlisting}
+
+\subsection{Member Of}\quad
+\subsubsection{Definition}
+aplMemberOf checks the membership of L in R, $L \in R$.  Result is object of same dimension as L with each of its element replaced by 1 or 0 corresponding to it exists or not in R.
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplMemberOf<-function (a, b)
+{
+    if (!identical(typeof(a), typeof(b)))
+        warning("Arguments of different types")
+    arrTest(a)
+    arrTest(b)
+    sa <- aplShape(a)
+    sb <- aplShape(b)
+    na <- prod(sa)
+    nb <- prod(sb)
+    z <- array(0, sa)
+    for (i in 1:na) {
+        z[i] <- 0
+        aa <- a[i]
+        for (j in 1:nb) if (identical(aa, b[j]))
+            z[i] <- 1
+    }
+    return(z)
+}
+\end{lstlisting}
+
+\subsection{Outer Product}\quad
+\subsubsection{Definition}
+Outer product is generalization of cartesian product where user can specify function other than simple product to apply to all of the combination of elements in L and R. L maru.R.?????  Currently it is same as outer function in R. 
+\subsubsection{\tR\ code}\quad
+
+\begin{lstlisting}
+aplOP<-function(x,y,f="*") return(outer(x,y,f))
+\end{lstlisting}
+
+\subsection{Ravel}\quad
+\subsubsection{Definition}
+Ravel takes an array or a matrix and reshapes it into a vector. Currently it is equivalent to as.vector in R. ???? ,B
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplRV<-function(a) as.vector(a)
+\end{lstlisting}
+
+\subsection{Rank}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplRank<-function(a) aplShape(aplShape(a))
+\end{lstlisting}
+
+\subsection{Reduce}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplRDV<-function(x,f="+") {
+    if (length(x) == 0) return(x)
+    s<-x[1]
+    if (length(x) == 1) return(s)
+    for (i in 2:length(x))
+        s<-match.fun(f)(s,x[i])
+    return(s)
+}
+\end{lstlisting}
+\begin{lstlisting}
+aplReduce<-function(a,k,f="+") {
+if (is.vector(a))
+    return(aplRDV(a,f))
+sa<-aplShape(a); ra<-aplRank(a); na<-prod(sa)
+ia<-(1:ra)[-k]
+sz<-sa[ia]
+ff<-match.fun(f)
+z<-array(0,sz); nz<-prod(sz)
+for (i in 1:na) {
+    ivec<-aplEncode(i,sa)
+    jind<-aplDecode(ivec[-k],sz)
+    z[jind]<-ff(z[jind],a[i])
+    }
+return(z)
+}
+\end{lstlisting}
+
+\subsection{Replicate}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplRPV<-function(x,y) {
+    n<-aplShape(x); m<-aplShape(y)
+    if (m == 1) y<-rep(y,n)
+    if (length(y) != n)
+        stop("Length Error in aplCRV")
+    z<-vector()
+    for (i in 1:n)
+        z<-c(z,rep(x[i],y[i]))
+return(z)
+}
+\end{lstlisting}
+\begin{lstlisting}
+aplReplicate<-function(x,y,k) {
+    if (is.vector(x)) return(aplRPV(x,y))
+    sx<-aplShape(x); sy<-aplShape(y); sk<-sx[k]
+    if (sy == 1) y<-rep(y,sk)
+    if (length(y) != sk)
+        stop("Length Error in aplRPV")
+    sz<-sx; sz[k]<-sum(y); nz<-prod(sz)
+    gg<-aplCRV(1:sk,y)
+    z<-array(0,sz)
+    for (i in 1:nz){
+        jvec<-aplEncode(i,sz)
+        jvec[k]<-gg[jvec[k]]
+        z[i]<-x[aplDecode(jvec,sx)]
+    }
+return(z)
+}
+\end{lstlisting}
+
+
+\subsection{Reshape}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplReshape<-function(a,d) return(array(a,d))
+\end{lstlisting}
+
+\subsection{Rotate}
+\subsubsection{Definition}
+Rotate~\citep[p. 191--193]{helzer_89} shifts the elements of a vector or array dimension. In \tA\ we write
+\tAc{A\qrotate B}.
+
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplRTV<-function(a,k) {
+    n<-aplShape(a)
+    if (k == 0) return(a)
+    if (k > 0)
+        return(c(a[-(1:k)],a[1:k]))
+    if (k < 0)
+        return(c(a[(n+k+1):n],a[1:(n+k)]))
+}
+\end{lstlisting}
+\begin{lstlisting}
+aplRotate<-function(a,x,k) {
+    if (is.vector(a)) return(aplRTV(a,k))
+    sa<-aplShape(a); sx<-aplShape(x)
+    if (sx == 1) x<-array(x,sa[-k])
+    if (!identical(sa[-k],aplShape(x)))
+        stop("Index Error in aplRotate")
+    z<-array(0,sa); sz<-sa; nz<-prod(sz); sk<-sz[k]
+    for (i in 1:nz) {
+        ivec<-aplEncode(i,sz)
+        xx<-x[aplDecode(ivec[-k],sx)]
+        ak<-rep(0,sk)
+        for (j in 1:sk) {
+            jvec<-ivec; jvec[k]<-j
+            ak[j]<-a[aplDecode(jvec,sz)]
+            }
+        bk<-aplRTV(ak,xx)
+        for (j in 1:sk) {
+            jvec<-ivec; jvec[k]<-j
+            z[aplDecode(jvec,sz)]<-bk[j]
+            }
+    }
+return(z)
+}
+\end{lstlisting}
+\subsection{Scan}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplSCV<-function(x,f="+") {
+    if (length(x) <= 1) return(x)
+    return(sapply(1:length(x),function(i) aplRDV(x[1:i],f)))
+}
+\end{lstlisting}
+\begin{lstlisting}
+aplSC<-function(a,k,f="+") {
+if (is.vector(a)) return(aplSCV(a,f))
+sa<-aplShape(a); ra<-aplRank(a); sk<-sa[k]; u<-unit(k,ra)
+ff<-match.fun(f)
+na<-prod(sa); z<-a
+for (i in 1:na) {
+    ivec<-aplEncode(i,sa)
+    sk<-ivec[k]
+    if (sk == 1) z[i]<-a[i]
+        else z[i]<-ff(z[aplDecode(ivec-u,sa)],a[i])
+    }
+return(z)
+}
+\end{lstlisting}
+
+\subsection{Select}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplSelect<-function(a,x,drop=FALSE) {
+sa<-aplShape(a); ra<-aplRank(a)
+sz<-sapply(x,length)
+z<-array(0,sz); nz<-prod(sz)
+for (i in 1:nz) {
+    ivec<-aplEncode(i,sz)
+    jvec<-vector()
+    for (j in 1:ra)
+        jvec<-c(jvec,x[[j]][ivec[j]])
+    z[i]<-a[aplDecode(jvec,sa)]
+    }
+if (drop) return(drop(z)) else return(z)
+}
+\end{lstlisting}
+
+\subsection{Shape}
+\subsubsection{Definition}
+
+Shape is the monadic version of \tAc{\qrho}, while reshape is the dyadic version. Shape gives the dimensions of an array, an Reshape modifies them. \tRc{aplRank()} is not really a standard \tA\ function, but we use it
+as shorthand for \tAc{\qrho\qrho A}.
+
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplShape<-function(a) {
+    if (is.vector(a)) return(length(a))
+    return(dim(a))
+}
+\end{lstlisting}
+
+
+\subsection{Take}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+
+\begin{lstlisting}
+aplTK<-function(a,x,drop=FALSE) {
+sa<-aplShape(a); ra<-aplRank(a)
+y<-as.list(rep(0,ra))
+for (i in 1:ra) {
+    ss<-sa[i]; xx<-x[i]; sx<-ss-xx
+    if (xx > 0) y[[i]]<-1:xx
+    if (xx < 0) y[[i]]<-(sx+1):ss
+    }
+return(aplSelect(a,y,drop))
+}
+\end{lstlisting}
+
+\subsection{Transpose}
+\subsubsection{Definition}
+\texttt{APL} has both a monadic {\apl\qtran A} and a dyadic {\apl B\qtran A} transpose. This \texttt{APL} transpose has a somewhat tortuous relationship
+with \texttt{R}'s \texttt{aperm()}.
+
+The monadic \texttt{aplTranspose(a)} and
+\texttt{aperm(a)} are always the same, they reverse the order of the
+dimensions.
+
+If \lstinline{x} is a permutation
+of \lstinline{1:aplRank(a)}, then \lstinline{aperm(a,x)} is
+actually equal to \lstinline{aplTranspose(a,order(x))}.
+For
+permutations we could consequently define
+\lstinline{aplTranspose(a,x)} simply as \lstinline{aperm(a,order(x))} (which would undoubtedly be more efficient as well).
+
+If \lstinline{x} is not
+a permutation, then \lstinline{aperm(a,x)} is undefined, but
+\lstinline{aplTranspose(a,x)} can still be defined in some
+cases.
+
+If \lstinline{x} has \lstinline{aplRank(a)} elements equal to
+one of \lstinline{1:m},  with each of \lstinline{1:m}
+occurring a least once, then \lstinline{aplTranspose(a,x)}
+has rank \lstinline{m}. For obvious reasons dyadic
+transpose is not used a great deal.
+
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+aplTranspose<-function(a,x=rev(1:aplRank(a))) {
+sa<-aplShape(a); ra<-aplRank(a)
+if (length(x) != ra)
+    stop("Length Error in aplTranspose")
+rz<-max(x); sz<-rep(0,rz)
+for (i in 1:rz)
+    sz[i]<-min(sa[which(x==i)])
+nz<-prod(sz)
+z<-array(0,sz)
+for (i in 1:nz)
+    z[i]<-a[aplDecode(aplEncode(i,sz)[x],sa)]
+return(z)
+}
+\end{lstlisting}
+
+\section{Utilities}\quad
+\subsubsection{Definition}
+\subsubsection{\tR\ code}\quad
+\begin{lstlisting}
+first<-function(x) return(x[1])
+
+butFirst<-function(x) return(x[-1])
+
+last<-function(x) return(x[length(x)])
+
+butLast<-function(x) return(x[-length(x)])
+
+unit<-function(i,n) ifelse(i==(1:n),1,0)
+\end{lstlisting}
+
+\bibliographystyle{plainnat}
+\bibliography{jans}
+%\printindex
+\end{document}
+
+

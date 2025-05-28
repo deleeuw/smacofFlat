@@ -4,15 +4,16 @@
 #define SQUARE(x) ((x) * (x))
 
 void smacofDistances(int *nobj, int *ndim, int *ndat, int *ii, int *jj,
-                     double *edis, double *xnew) {
+                     double *d, double *x) {
     int Nobj = *nobj, Ndim = *ndim, Ndat = *ndat;
     for (int k = 0; k < Ndat; k++) {
-        int i = ii[k], j = jj[k];
+        int is = ii[k] - 1, js = jj[k] - 1;
         double sum = 0.0;
         for (int s = 0; s < Ndim; s++) {
-            int is = s * Nobj + (i - 1), js = s * Nobj + (j - 1);
-            sum += SQUARE(xnew[is] - xnew[js]);
-            edis[k] = sqrt(sum);
+            sum += SQUARE(x[is] - x[js]);
+            d[k] = sqrt(sum);
+            is += Nobj;
+            js += Nobj;
         }
     }
 }
@@ -22,19 +23,21 @@ void smacofStepUnweighted(int *nobj, int *ndim, int *ndat, int *ii, int *jj,
                           double *xnew) {
     int Nobj = *nobj, Ndim = *ndim, Ndat = *ndat;
     for (int k = 0; k < Ndat; k++) {
-        int i = ii[k], j = jj[k];
+        int is = ii[k] - 1, js = jj[k] - 1;
         double elem = dhat[k] / edis[k];
         for (int s = 0; s < Ndim; s++) {
-            int is = s * Nobj + (i - 1), js = s * Nobj + (j - 1);
             double add = elem * (xold[is] - xold[js]);
             xnew[is] += add;
             xnew[js] -= add;
+            is += Nobj;
+            js += Nobj;
         }
     }
     for (int i = 0; i < Nobj; i++) {
+        int is = i;
         for (int s = 0; s < Ndim; s++) {
-            int is = s * Nobj + i;
             xnew[is] = xnew[is] / (double)Nobj;
+            is += Nobj;
         }
     }
     (void)smacofDistances(nobj, ndim, ndat, ii, jj, edis, xnew);
@@ -46,24 +49,27 @@ void smacofStepWeighted(int *nobj, int *ndim, int *ndat, int *ii, int *jj,
                         double *xold, double *xtmp, double *xnew) {
     int Nobj = *nobj, Ndim = *ndim, Ndat = *ndat;
     for (int k = 0; k < Ndat; k++) {
-        int i = ii[k], j = jj[k];
+        int is = ii[k] - 1, js = jj[k] - 1;
         double elem = wght[k] * dhat[k] / edis[k];
         for (int s = 0; s < Ndim; s++) {
-            int is = s * Nobj + (i - 1), js = s * Nobj + (j - 1);
             double add = elem * (xold[is] - xold[js]);
             xtmp[is] += add;
             xtmp[js] -= add;
+            is += Nobj;
+            js += Nobj;
         }
     }
     int k = 0;
     for (int j = 0; j < Nobj - 1; j++) {
         for (int i = j + 1; i < Nobj; i++) {
             double elem = vinv[k];
+            int is = i, js = j;
             for (int s = 0; s < Ndim; s++) {
-                int is = s * Nobj + i, js = s * Nobj + j;
                 double add = elem * (xtmp[is] - xtmp[js]);
                 xnew[is] += add;
                 xnew[js] -= add;
+                is += Nobj;
+                js += Nobj;
             }
             k++;
         }

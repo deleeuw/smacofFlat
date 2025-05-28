@@ -1,0 +1,65 @@
+\contentsline {section}{\tocsection {}{1}{Introduction}}{3}{section.1}
+\contentsline {section}{\tocsection {}{2}{Functions}}{4}{section.2}
+\contentsline {subsection}{\tocsubsection {}{2.1}{Compress}}{4}{subsection.2.1}
+\contentsline {subsection}{\tocsubsection {}{2.2}{Decode}}{4}{subsection.2.2}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.2.1}{Definition}}{4}{subsubsection.2.2.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.2.2}{\texttt {R}\ code}}{4}{subsubsection.2.2.2}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.2.3}{}}{5}{subsubsection.2.2.3}
+\contentsline {subsection}{\tocsubsection {}{2.3}{Drop}}{5}{subsection.2.3}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.3.1}{Definition}}{5}{subsubsection.2.3.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.3.2}{\texttt {R}\ code}}{5}{subsubsection.2.3.2}
+\contentsline {subsection}{\tocsubsection {}{2.4}{Encode}}{5}{subsection.2.4}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.4.1}{Definition}}{5}{subsubsection.2.4.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.4.2}{\texttt {R}\ code}}{5}{subsubsection.2.4.2}
+\contentsline {subsection}{\tocsubsection {}{2.5}{Expand}}{6}{subsection.2.5}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.5.1}{Definition}}{6}{subsubsection.2.5.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.5.2}{\texttt {R}\ code}}{6}{subsubsection.2.5.2}
+\contentsline {subsection}{\tocsubsection {}{2.6}{Inner Product}}{6}{subsection.2.6}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.6.1}{Definition}}{6}{subsubsection.2.6.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.6.2}{\texttt {R}\ code}}{7}{subsubsection.2.6.2}
+\contentsline {subsection}{\tocsubsection {}{2.7}{Join}}{7}{subsection.2.7}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.7.1}{Definition}}{7}{subsubsection.2.7.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.7.2}{\texttt {R}\ code}}{7}{subsubsection.2.7.2}
+\contentsline {subsection}{\tocsubsection {}{2.8}{Member Of}}{8}{subsection.2.8}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.8.1}{Definition}}{8}{subsubsection.2.8.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.8.2}{\texttt {R}\ code}}{8}{subsubsection.2.8.2}
+\contentsline {subsection}{\tocsubsection {}{2.9}{Outer Product}}{9}{subsection.2.9}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.9.1}{Definition}}{9}{subsubsection.2.9.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.9.2}{\texttt {R}\ code}}{9}{subsubsection.2.9.2}
+\contentsline {subsection}{\tocsubsection {}{2.10}{Ravel}}{9}{subsection.2.10}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.10.1}{Definition}}{9}{subsubsection.2.10.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.10.2}{\texttt {R}\ code}}{9}{subsubsection.2.10.2}
+\contentsline {subsection}{\tocsubsection {}{2.11}{Rank}}{9}{subsection.2.11}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.11.1}{Definition}}{9}{subsubsection.2.11.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.11.2}{\texttt {R}\ code}}{9}{subsubsection.2.11.2}
+\contentsline {subsection}{\tocsubsection {}{2.12}{Reduce}}{9}{subsection.2.12}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.12.1}{Definition}}{10}{subsubsection.2.12.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.12.2}{\texttt {R}\ code}}{10}{subsubsection.2.12.2}
+\contentsline {subsection}{\tocsubsection {}{2.13}{Replicate}}{10}{subsection.2.13}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.13.1}{Definition}}{10}{subsubsection.2.13.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.13.2}{\texttt {R}\ code}}{10}{subsubsection.2.13.2}
+\contentsline {subsection}{\tocsubsection {}{2.14}{Reshape}}{11}{subsection.2.14}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.14.1}{Definition}}{11}{subsubsection.2.14.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.14.2}{\texttt {R}\ code}}{11}{subsubsection.2.14.2}
+\contentsline {subsection}{\tocsubsection {}{2.15}{Rotate}}{11}{subsection.2.15}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.15.1}{Definition}}{11}{subsubsection.2.15.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.15.2}{\texttt {R}\ code}}{12}{subsubsection.2.15.2}
+\contentsline {subsection}{\tocsubsection {}{2.16}{Scan}}{12}{subsection.2.16}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.16.1}{Definition}}{13}{subsubsection.2.16.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.16.2}{\texttt {R}\ code}}{13}{subsubsection.2.16.2}
+\contentsline {subsection}{\tocsubsection {}{2.17}{Select}}{13}{subsection.2.17}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.17.1}{Definition}}{13}{subsubsection.2.17.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.17.2}{\texttt {R}\ code}}{13}{subsubsection.2.17.2}
+\contentsline {subsection}{\tocsubsection {}{2.18}{Shape}}{14}{subsection.2.18}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.18.1}{Definition}}{14}{subsubsection.2.18.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.18.2}{\texttt {R}\ code}}{14}{subsubsection.2.18.2}
+\contentsline {subsection}{\tocsubsection {}{2.19}{Take}}{14}{subsection.2.19}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.19.1}{Definition}}{14}{subsubsection.2.19.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.19.2}{\texttt {R}\ code}}{14}{subsubsection.2.19.2}
+\contentsline {subsection}{\tocsubsection {}{2.20}{Transpose}}{14}{subsection.2.20}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.20.1}{Definition}}{15}{subsubsection.2.20.1}
+\contentsline {subsubsection}{\tocsubsubsection {}{2.20.2}{\texttt {R}\ code}}{15}{subsubsection.2.20.2}
+\contentsline {section}{\tocsection {}{3}{Utilities}}{15}{section.3}
+\contentsline {subsubsection}{\tocsubsubsection {}{3.0.3}{Definition}}{16}{subsubsection.3.0.3}
+\contentsline {subsubsection}{\tocsubsubsection {}{3.0.4}{\texttt {R}\ code}}{16}{subsubsection.3.0.4}
+\contentsline {section}{\tocsection {}{}{References}}{16}{section*.2}

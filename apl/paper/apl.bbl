@@ -1,0 +1,28 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Helzer(1989)]{helzer_89}
+G.~Helzer.
+\newblock \emph{An Encyclopedia of APL}.
+\newblock I-APL LTD, St. Albans, G.B., second edition, 1989.
+
+\bibitem[IBM(1988)]{apl2_88}
+IBM.
+\newblock \emph{APL2 Programming: Language Reference}.
+\newblock IBM, San Jose, California, {Fourth} edition, April 1988.
+
+\bibitem[Iverson(1962)]{iverson_62}
+K.~Iverson.
+\newblock \emph{A Programming Language}.
+\newblock Wiley, 1962.
+
+\bibitem[MicroAPL(2007)]{aplx_07}
+MicroAPL.
+\newblock \emph{{APLX Language Manual}}.
+\newblock MicroAPL Ltd., {Version 4} edition, November 2007.
+
+\end{thebibliography}

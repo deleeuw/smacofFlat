@@ -18,24 +18,21 @@ matrixPrint <- function(x,
 
 makeMDSData <- function(delta, weights = NULL) {
   nobj <- attr(delta, "Size")
-  ndat <- nobj * (nobj - 1) / 2
+  # ndat <- nobj * (nobj - 1) / 2
+  if (is.null(weights)) {
+    weights <- as.dist(1 - diag(nobj))
+  }
   theData <- NULL
   k <- 1
   for (j in 1:(nobj - 1)) {
     for (i in (j + 1):nobj) {
-      if (is.null(weights)) {
-        theData <- rbind(theData, c(i, j, delta[k], 0))
-      } else {
+      if ((weights[k] > 0) && (!is.na(weights[k])) && (!is.na(delta[k]))) {
         theData <- rbind(theData, c(i, j, delta[k], 0, weights[k]))
       }
       k <- k + 1
     }
   }
-  if (is.null(weights)) {
-    colnames(theData) <- c("i", "j", "delta", "blocks")
-  } else {
-    colnames(theData) <- c("i", "j", "delta", "blocks", "weights")
-  }
+  colnames(theData) <- c("i", "j", "delta", "blocks", "weights")
   delta <- theData[, 3]
   theData <- theData[order(delta), ]
   theData[, 4] <- makeTieBlocks(theData[, 3])
@@ -87,8 +84,8 @@ torgerson <- function(theData, ndim) {
   dr <- apply(dmat, 1, mean)
   dm <- mean(dmat)
   cmat <- -(dmat - outer(dr, dr, "+") + dm) / 2
-  ev <- eigen(cmat)
-  x <- ev$vectors[, 1:ndim] %*% diag(sqrt(ev$values[1:ndim]), nrow = ndim, ncol = ndim)
+  ev <- eigs_sym(cmat, ndim, which = "LA")
+  x <- ev$vectors[, 1:ndim] %*% diag(sqrt(drop(ev$values[1:ndim])))
   return(x)
 }
 
