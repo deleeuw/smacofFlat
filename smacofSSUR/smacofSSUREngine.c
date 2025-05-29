@@ -25,9 +25,7 @@ void smacofSSUREngine(int *nobj,
   while(true) {
     for (int k = 0; k < Ndat; k++) {
       int is = iind[k] - 1, js = jind[k] - 1;
-      // printf("%d %d %d %d\n", iind[k], jind[k], is, js);
       double elem = dhat[k] / edis[k];
-      // printf("%f %f %f\n", dhat[k], edis[k], elem);
       for (int s = 0; s < Ndim; s++) {
         double add = elem * (xold[is] - xold[js]);
         xnew[is] += add;

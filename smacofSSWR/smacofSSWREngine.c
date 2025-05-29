@@ -6,7 +6,7 @@
 
 #define SQUARE(x) ((x) * (x))
 
-void smacofSSUREngine(int *nobj,
+void smacofSSWREngine(int *nobj,
                       int *ndim,
                       int *ndat,
                       int *itel, 
@@ -19,30 +19,40 @@ void smacofSSUREngine(int *nobj,
                       int *jind,
                       double *edis,
                       double *dhat,
+                      double *wght,
+                      double *vinv,
                       double *xold,
                       double *xnew){
   int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim; 
   while(true) {
+    double *xtmp = (double *)calloc(Nobj * Ndim, sizeof(double));
     for (int k = 0; k < Ndat; k++) {
-      int is = iind[k] - 1, js = jind[k] - 1;
-      // printf("%d %d %d %d\n", iind[k], jind[k], is, js);
-      double elem = dhat[k] / edis[k];
-      // printf("%f %f %f\n", dhat[k], edis[k], elem);
-      for (int s = 0; s < Ndim; s++) {
-        double add = elem * (xold[is] - xold[js]);
-        xnew[is] += add;
-        xnew[js] -= add;
-        is += Nobj;
-        js += Nobj;
-      }
+        int is = iind[k] - 1, js = jind[k] - 1;
+        double elem = wght[k] * dhat[k] / edis[k];
+        for (int s = 0; s < Ndim; s++) {
+            double add = elem * (xold[is] - xold[js]);
+            xtmp[is] += add;
+            xtmp[js] -= add;
+            is += Nobj;
+            js += Nobj;
+        }
     }
-    for (int i = 0; i < Nobj; i++) {
-      int is = i;
-      for (int s = 0; s < Ndim; s++) {
-        xnew[is] = xnew[is] / (double)Nobj;
-        is += Nobj;
-      }
+    int k = 0;
+    for (int j = 0; j < Nobj - 1; j++) {
+        for (int i = j + 1; i < Nobj; i++) {
+            double elem = vinv[k];
+            int is = i, js = j;
+            for (int s = 0; s < Ndim; s++) {
+                double add = elem * (xtmp[is] - xtmp[js]);
+                xnew[is] += add;
+                xnew[js] -= add;
+                is += Nobj;
+                js += Nobj;
+            }
+            k++;
+        }
     }
+    free(xtmp);
     for (int k = 0; k < Ndat; k++) {
       int is = iind[k] - 1, js = jind[k] - 1;
       double sum = 0.0;

@@ -1,11 +1,12 @@
-dyn.load("smacofSSWREngine.so")
+dyn.load("smacofSSUOEngine.so")
 
 source("../smacofUtils.R")
 source("../smacofSSData.R")
 
-smacofSSWR <- function(theData,
+smacofSSUO <- function(theData,
                        ndim = 2,
                        xold = torgerson(theData, ndim),
+                       ties = 1,
                        itmax = 1000,
                        eps = 1e-10,
                        verbose = TRUE) {
@@ -15,8 +16,7 @@ smacofSSWR <- function(theData,
   iind <- theData[, 1]
   jind <- theData[, 2]
   dhat <- theData[, 3]
-  wght <- theData[, 5]
-  vinv <- makeMPInverseV(theData)
+  blks <- theData[, 4]
   edis <- rep(0, ndat)
   for (k in 1:ndat) {
     i <- iind[k]
@@ -34,11 +34,12 @@ smacofSSWR <- function(theData,
   xold <- as.vector(xold)
   xnew <- rep(0, nobj * ndim)
   h <- .C(
-    "smacofSSWREngine",
+    "smacofSSUOEngine",
     nobj = as.integer(nobj),
     ndim = as.integer(ndim),
     ndat = as.integer(ndat),
     itel = as.integer(itel),
+    ties = as.integer(ties),
     itmax = as.integer(itmax),
     verbose = as.integer(verbose),
     sold = as.double(sold),
@@ -46,10 +47,9 @@ smacofSSWR <- function(theData,
     eps = as.double(eps),
     iind = as.integer(iind),
     jind = as.integer(jind),
+    blks = as.integer(blks),
     edis = as.double(edis),
     dhat = as.double(dhat),
-    wght = as.double(wght),
-    vinv = as.double(vinv),
     xold = as.double(xold),
     xnew = as.double(xnew)
   )
