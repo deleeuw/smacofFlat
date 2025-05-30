@@ -23,70 +23,82 @@ struct quintuple {
     int jndex;
 };
 
-void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
-                      int *itmax, bool *verbose, double *sold, double *snew,
-                      double *eps, int *iind, int *jind, int *blks,
-                      double *edis, double *dhat, double *xold, double *xnew) {
+void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
+                      int *itmax, int *digits, int *width, bool *verbose,
+                      double *sold, double *snew, double *eps, int *iind,
+                      int *jind, int *blks, double *edis, double *dhat,
+                      double *wght, double *vinv, double *xold, double *xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
     while (true) {
+        double *xtmp = (double *)calloc(Nobj * Ndim, sizeof(double));
         for (int k = 0; k < Ndat; k++) {
             int is = iind[k] - 1, js = jind[k] - 1;
-            double elem = dhat[k] / edis[k];
+            double elem = wght[k] * dhat[k] / edis[k];
             for (int s = 0; s < Ndim; s++) {
                 double add = elem * (xold[is] - xold[js]);
-                xnew[is] += add;
-                xnew[js] -= add;
+                xtmp[is] += add;
+                xtmp[js] -= add;
                 is += Nobj;
                 js += Nobj;
             }
         }
-        for (int i = 0; i < Nobj; i++) {
-            int is = i;
-            for (int s = 0; s < Ndim; s++) {
-                xnew[is] = xnew[is] / (double)Nobj;
-                is += Nobj;
+        int k = 0;
+        for (int j = 0; j < Nobj - 1; j++) {
+            for (int i = j + 1; i < Nobj; i++) {
+                double elem = vinv[k];
+                int is = i, js = j;
+                for (int s = 0; s < Ndim; s++) {
+                    double add = elem * (xtmp[is] - xtmp[js]);
+                    xnew[is] += add;
+                    xnew[js] -= add;
+                    is += Nobj;
+                    js += Nobj;
+                }
+                k++;
             }
         }
+        free(xtmp);
         for (int k = 0; k < Ndat; k++) {
             int is = iind[k] - 1, js = jind[k] - 1;
             double sum = 0.0;
             for (int s = 0; s < Ndim; s++) {
                 sum += SQUARE(xnew[is] - xnew[js]);
-                edis[k] = sqrt(sum);
                 is += Nobj;
                 js += Nobj;
             }
+            edis[k] = sqrt(sum);
         }
         double smid = 0.0;
         for (int k = 0; k < Ndat; k++) {
-            smid += SQUARE(dhat[k] - edis[k]);
+            smid += wght[k] * SQUARE(dhat[k] - edis[k]);
         }
-        double *wght = (double *)calloc(Ndat, sizeof(double));
+        double *wwrk = (double *)calloc(Ndat, sizeof(double));
         for (int k = 0; k < Ndat; k++) {
-            wght[k] = 1.0; 
+            wwrk[k] = wght[k];
         }
-        dhat = memcpy(dhat, edis, (size_t) (Ndat * sizeof(double)));
+        dhat = memcpy(dhat, edis, (size_t)(Ndat * sizeof(double)));
         if (*ties == 1) {
-            (void)primaryApproach(ndat, blks, dhat, wght, edis, iind, jind);
+            (void)primaryApproach(ndat, blks, dhat, wwrk, edis, iind, jind);
         }
         if (*ties == 2) {
-            (void)secondaryApproach(ndat, blks, dhat, wght);
+            (void)secondaryApproach(ndat, blks, dhat, wwrk);
         }
         if (*ties == 3) {
-            (void)tertiaryApproach(ndat, blks, dhat, wght);
+            (void)tertiaryApproach(ndat, blks, dhat, wwrk);
         }
         double ssq = 0.0;
         for (int k = 0; k < Ndat; k++) {
-            ssq += SQUARE(dhat[k]);
+            ssq += wght[k] * SQUARE(dhat[k]);
         }
         *snew = 0.0;
         for (int k = 0; k < Ndat; k++) {
             dhat[k] /= sqrt(ssq);
-            *snew += SQUARE(dhat[k] - edis[k]);
+            *snew += wght[k] * SQUARE(dhat[k] - edis[k]);
         }
         if (*verbose) {
-            printf("itel %4d sold %15.10f smid %15.10f snew %15.10f\n", *itel,
-                   *sold, smid, *snew);
+            printf("itel %4d sold %*.*f smid %*.*f snew %*.*f\n", *itel, *width,
+                   *digits, *sold, *width, *digits, smid, *width, *digits,
+                   *snew);
         }
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
@@ -97,11 +109,12 @@ void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         }
         *sold = *snew;
         *itel += 1;
-        free(wght);
+        free(wwrk);
     }
 }
 
-void primaryApproach(int *ndat, int *blks, double *x, double *w, double *d, int *iind, int *jind) {
+void primaryApproach(int *ndat, int *blks, double *x, double *w, double *d,
+                     int *iind, int *jind) {
     int Ndat = *ndat;
     for (int i = 0; i < Ndat; i++) {
         int blksize = blks[i];
@@ -230,8 +243,8 @@ int myComp(const void *px, const void *py) {
 
 void mySort(double *x, double *w, double *d, int *iind, int *jind, int *n) {
     int nn = *n;
-    struct quintuple *xi =
-        (struct quintuple *)calloc((size_t)nn, (size_t)sizeof(struct quintuple));
+    struct quintuple *xi = (struct quintuple *)calloc(
+        (size_t)nn, (size_t)sizeof(struct quintuple));
     for (int i = 0; i < nn; i++) {
         xi[i].value = x[i];
         xi[i].weight = w[i];

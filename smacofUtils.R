@@ -55,7 +55,7 @@ makeTieBlocks <- function(x) {
 }
 
 makeMPInverseV <- function(theData) {
-  nobj <- max(theData[, 1])
+  nobj <- max(theData[, 1:2])
   ndat <- nrow(theData)
   wght <- matrix(0, nobj, nobj)
   for (k in 1:ndat) {

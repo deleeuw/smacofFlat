@@ -8,6 +8,8 @@ smacofSSUR <- function(theData,
                        xold = torgerson(theData, ndim),
                        itmax = 1000,
                        eps = 1e-10,
+                       digits = 10,
+                       width = 15,
                        verbose = TRUE) {
   nobj <- nrow(xold)
   ndat <- nrow(theData)
@@ -38,6 +40,8 @@ smacofSSUR <- function(theData,
     ndat = as.integer(ndat),
     itel = as.integer(itel),
     itmax = as.integer(itmax),
+    digits = as.integer(digits),
+    width = as.integer(width),
     verbose = as.integer(verbose),
     sold = as.double(sold),
     snew = as.double(snew),

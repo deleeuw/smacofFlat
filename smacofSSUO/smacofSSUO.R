@@ -9,6 +9,8 @@ smacofSSUO <- function(theData,
                        ties = 1,
                        itmax = 1000,
                        eps = 1e-10,
+                       digits = 10, 
+                       width = 15,
                        verbose = TRUE) {
   nobj <- nrow(xold)
   ndat <- nrow(theData)
@@ -41,6 +43,8 @@ smacofSSUO <- function(theData,
     itel = as.integer(itel),
     ties = as.integer(ties),
     itmax = as.integer(itmax),
+    digits = as.integer(digits),
+    width = as.integer(width),
     verbose = as.integer(verbose),
     sold = as.double(sold),
     snew = as.double(snew),
