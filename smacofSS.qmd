@@ -39,7 +39,7 @@ papersize: letter
 graphics: true
 link-citations: true
 mainfont: Times New Roman
-abstract: TBD
+abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for   square symmetric data as four monolithic C programs, with R used for taking care of the setup, the    I/O, and of issuing a single call to .C() to start the computations. This makes the programs twenty to fifty times as fast (for our examples) as the smacofSym() function from the smacof package.
 ---
 
 ```{r loadpackages, echo = FALSE}
@@ -51,7 +51,14 @@ suppressPackageStartupMessages(library(smacof, quietly = TRUE))
 
 ```{r loadsourses, echo = FALSE}
 source("smacofUtils.R")
-source("smacofSS.R")
+source("smacofSSUR.R")
+source("smacofSSWR.R")
+source("smacofSSUO.R")
+source("smacofSSWO.R")
+```
+
+```{r turnoff, echo = FALSE}
+options(warn = -1)
 ```
 
 **Note:** This is a working manuscript which will be expanded/updated
@@ -64,7 +71,37 @@ appreciated, but is not required. The files can be found at
 
 # Introduction
 
-# Data
+The data in MDS is information about the non-negative *dissimilarities* $\delta_{ij}$ between pairs of objects $(i,j)$ from a set of $n$ objects, together with positive *weights* $w_{ij}$ that indicate the importance or precision of dissimilarity $\delta_{ij}$. In (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional) MDS we
+want to map the objects into points in $p$-dimensional Euclidean space in such a way that the distances
+$d_{ij}$ between the points approximate the dissimilarities $\delta_{ij$. 
+
+If the dissimilarities are known numbers the MDS problem is *metric*, if 
+
+Suppose $I_n=\{1,2,\cdots,n\}$ and $\mathcal{K}$ is a subset of $I_n\times I_n$ of size $m$. For all with $(i,j)\in\mathcal{K}$
+we have $i>j$.
+\begin{equation}
+\sigma(X,\Delta):=\frac{\sum_{(i,j)\in\mathcal{K}}w_{ij}(\delta_{ij}-d_{ij}(X))^2}{\sum_{(i,j)\in\mathcal{K}}w_{ij}\delta_{ij}^2}.
+\label{eq-stressdef}
+\end{equation}
+In \eqref{eq-stressdef}
+
+* $\delta_{ij}$ are $m$ non-negative *pseudo-distances*;
+* $w_{ij}$ are $m$ positive *weights*;
+* $X$ is an $n\times p$ *configuration matrix*, with coordinates of $n$ *points* in $\mathbb{R}^p$;
+* $d_{ij}(X)$ are the (Euclidean) *distances* between the rows of the configuration matrix.
+
+Thus
+\begin{equation}
+d_{ij}(X):=\sqrt{\sum_{s=1}^p(x_{is}-x_{js})^2}.\label{eq-distdef}
+\end{equation}
+
+The (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional) MDS problem is to minimize $\sigma$ of \eqref{eq-stressdef} over all $n\times p$ configurations and over a set $\mathcal{D}\in\mathbb{R}^m_+$ of non-negative  
+pseudo-distances. 
+An MDS problem is *unweighted* if all $w_{ij}$ are equal, otherwise it is *weighted*. An MDS problem is *metric* if
+the set $\mathcal{D}$ of dissimilarities is a singleton, otherwise it is *non-metric*.
+
+
+# MDS Data Structure
 
 Start with an object of class *dist* containing dissimilarities. Here is a small example of order four.
 ```{r small, echo = FALSE}
@@ -129,6 +166,8 @@ MDS data sets. As long as the conventions are obeyed that no index pair $(i,j)$ 
 
 The *smacofSS* function has the following arguments.
 
+Four functions
+
 1. *theData*, an MDS data structure.  
 2. *ndim*, dimensionality of MDS analysis.
 3. *xold*, initial configuration, an *nobj* by *ndim* matrix.
@@ -141,10 +180,8 @@ The *smacofSS* function has the following arguments.
 
 # Details
 
-None of the arguments has default values. Of course *ties* is relevant 
-only if *ordinal* is TRUE. And *weighted* is set to TRUE only if
-the numerical weights are different from unity (and if the data
-set is incomplete because of missing data). The terminology in
+
+ The terminology in
 *ties* refers to @deleeuw_A_77.
 
 # Value
@@ -189,115 +226,163 @@ dissimilarities imputed using the average non-missing dissimilarity. The
 eigenvalues and eigenvectors are computed with *eigs-sym()* from the
 *RSpectra* package (@qiu_mei_24).
 
+
+
 \sectionbreak
+
+# Comparisons
+
+## Outcome
+
 ```{r}
 xinit <- torgerson(morseData, 2)
 ```
 
+```{r compUR, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
+h2 <- smacofSSUR(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+
+```{r compUO1, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000)
+h2 <- smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+```{r compUO2, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000)
+h2 <- smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+```{r compUO3, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000)
+h2 <- smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+
+```{r compWR, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000)
+h2 <- smacofSSWR(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+
+```{r compWO1, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ordinal", ties = "primary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
+h2 <- smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+```{r compWO2, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ordinal", ties = "secondary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
+h2 <- smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
+hh <- c(h1$stress, h1$niter, h2$loss, h2$itel)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+```{r compWO3, cache = FALSE, echo = FALSE}
+h1 <- smacofSym(morse, type = "ordinal", ties = "tertiary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
+h2 <- smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
+cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
+    formatC(h1$niter, width = 6, format = "d"),
+    formatC(h2$loss, digits = 10, width = 15, format = "f"),
+    formatC(h2$itel, width = 6, format = "d"),"\n")
+```
+
+## Time
+
 ```{r microbenchmark_num, cache = TRUE, echo = FALSE}
-mnum <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ratio", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = FALSE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUR(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 ```{r microbenchmark_ord1, cache = TRUE, echo = FALSE}
-mord1 <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 ```
 ```{r microbenchmark_ord2, cache = TRUE, echo = FALSE}
-mord2 <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
 ```
 ```{r microbenchmark_ord3, cache = TRUE, echo = FALSE}
-mord3 <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = FALSE, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 ```
 
-```{r echo = FALSE}
-a <- median(mnum$time[1:100])
-b <- median(mnum$time[101:200])
-cat("mnum ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-a <- median(mord1$time[1:100])
-b <- median(mord1$time[101:200])
-cat("mord1 ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-a <- median(mord2$time[1:100])
-b <- median(mord2$time[101:200])
-cat("mord2 ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-a <- median(mord3$time[1:100])
-b <- median(mord3$time[101:200])
-cat("mord3 ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-```
+
 
 ```{r wgthnum, cache = TRUE, echo = FALSE}
-mnumw <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = FALSE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWR(morseData, ndim = 2,  xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 ```{r wgthord1, cache = TRUE, echo = FALSE}
-mord1w <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 ```{r wgthord2, cache = TRUE, echo = FALSE}
-mord2w <- microbenchmark(
+microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWO(
+  morseData,
+  ndim = 2,
+  xold = xinit,
+  eps = 1e-10,
+  itmax = 1000,
+  ties = 2,
+  verbose = FALSE
+), control = list(order = "inorder"))
 ```
-```{r wgthord3, cache = TRUE, echo = FALSE}
-mord3w <- microbenchmark(
+```{r wgthord3, cache = TRUE, echo = TRUE}
+microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2, ordinal = TRUE, xold = xinit, weighted = TRUE, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 ```
-```{r echo = FALSE}
-a <- median(mnumw$time[1:100])
-b <- median(mnumw$time[101:200])
-cat("mnumw ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-a <- median(mord1w$time[1:100])
-b <- median(mord1w$time[101:200])
-cat("mord1w ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-a <- median(mord2w$time[1:100])
-b <- median(mord2w$time[101:200])
-cat("mord2w ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
-a <- median(mord3w$time[1:100])
-b <- median(mord3w$time[101:200])
-cat("mord3w ",
-    formatC(a, format = "d", width = 10),
-    formatC(b, format = "d", width = 10),
-    formatC(a / b, format = "f", digits = 10),
-    "\n")
+```{r table, echo = FALSE}
+rnames = c(
+"ratio, unweighted",
+"ordinal, unweighted,ties = primary",
+"ordinal, unweighted, ties = secondary",
+"ordinal, unweighted, ties = tertiary"
+)
+x = matrix(c(
+15156.388,850.504, 15156.38/850.504,
+14956.0825, 382.8785, 14956.0825/382.8785,
+9977.2885, 342.2475, 9977.2885/342.2475,
+24522.2640, 365.9045, 24522.2640/365.9045
+), 4, 3, byrow = TRUE)
+x <- data.frame(rnames, as.data.frame(x))
+kable(x, digits = 4, row.names = FALSE, col.names = c("options", "smacofSym", "smacofSS", "ratio"))
 ```
 
+```{r iristime, cache = TRUE}
+microbenchmark(
+smacofSym(irisDist, eps = 1e-10, verbose = FALSE, type = "ratio", itmax = 1000),
+smacofSSUR(irisData, verbose = FALSE))
+```
 # References
