@@ -1,7 +1,6 @@
 dyn.load("smacofSSWOEngine.so")
 
 source("smacofUtils.R")
-source("smacofSSData.R")
 
 smacofSSWO <- function(theData,
                        ndim = 2,

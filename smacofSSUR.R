@@ -1,7 +1,6 @@
 dyn.load("smacofSSUREngine.so")
 
 source("smacofUtils.R")
-source("smacofSSData.R")
 
 smacofSSUR <- function(theData,
                        ndim = 2,
