@@ -226,21 +226,40 @@ eigenvalues and eigenvectors are computed with *eigs-sym()* from the
 
 # Value
 
-1. theData.
-2. dhat, final pseudo-distances.
-3. confdist, final distances.
-4. conf, final configuration.
-5. stress, final stress.
+1. *theData*.
+2. *dhat*, final pseudo-distances.
+3. *confdist*, final distances.
+4. *conf*, final configuration.
+5. *stress*, final stress.
 6. *ndim*, number of dimensions.
-7.  init = xinit,
-8.  niter = h$itel,
-9.  nobj = nobj,
-10. weighted = TRUE,
+7.  *init*, initial configuration.
+8.  *niter*, number of iterations.
+9.  *nobj*, number of objects.
+10. *weighted*, was the analysis weighted.
+11. *ordinal*, was the analysis ordinal (and if so, which tie approach).
+
+One thing should be kept in mind. In the ordinal case, with the primary approach to ties, the data
+are reordered within tie blocks in each iteration. In the MDS data structure we reorder iind, jind,
+and in the weighted case the weights. There is no need to reorder delta and the blocks, because the
+only ordering changes are within blocks. No reordering is going on in the secondary and tertiary
+approaches.
+
 
 \sectionbreak
 
 # Utilities
 
+## Plotting
+
+## I/O
+
+# Example Data Sets
+
+ekman
+rthkopf
+degruijter
+wish
+iris
 
 
 
