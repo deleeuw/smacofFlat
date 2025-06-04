@@ -9,7 +9,7 @@
 *.Rproj
 *.o
 *.so
-*_cache
+*cache/
 !README.md
 *._files
 ._libs

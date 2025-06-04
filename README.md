@@ -6,6 +6,7 @@ to use the strengths of both languages. It also
 - has the smacof upgrade formula in C
 - uses Busing's monotone function in C for monotone regression
 - implements the three tie approaches for monotone regression, also in C
+- is a monolithic C program with R frontend for data entry
 - smacofSS is for square symmetric MDS problems weighted/unweighted and ratio/ordinal
 - it consists of four separate R programs for these four options (more will follow)
 - the default initial is torgerson (if missing data, impute using average dissimilarity)
@@ -14,6 +15,7 @@ to use the strengths of both languages. It also
 - creates the MDS data structure (a matrix) from Delta or (Delta, W) and back
 - only entries below the diagonal are used
 - in the MDS data structure dissimilarities are already sorted
-- the FFI uses .C(), so the C code does not use the R API
+- smacofSS uses a single .C() call, so the C code does not use the R API
 - the C code is supposed to be portable
-- seems reasonably fast
+- 5 to 30 times as fast as smacofSym from the smacof package
+- R routines for data manipulation and plotting are included 
