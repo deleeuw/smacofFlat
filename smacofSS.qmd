@@ -71,34 +71,22 @@ appreciated, but is not required. The files can be found at
 
 # Introduction
 
-The data in MDS is information about the non-negative *dissimilarities* $\delta_{ij}$ between pairs of objects $(i,j)$ from a set of $n$ objects, together with positive *weights* $w_{ij}$ that indicate the importance or precision of dissimilarity $\delta_{ij}$. In (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional) MDS we
-want to map the objects into points in $p$-dimensional Euclidean space in such a way that the distances
-$d_{ij}$ between the points approximate the dissimilarities $\delta_{ij$. 
+The data in MDS is qualitative or quantitative information about the *dissimilarities* $\delta_k$ between $m$ pairs of objects $(i,j)$, with the objects coming from a set of $n$ objects. The information about the dissimilarities is of the form $\delta\in\Delta$, where $\Delta$ is a known subset of the non-negative orthant of $\mathbb{R}^m$. In MDS we want to map the objects into points in $p$-dimensional Euclidean space in such a way that the distances $d_k$ between the points approximate the dissimilarities $\delta_k$. If the dissimilarities are known numbers and $\Delta$ has only a single element the MDS problem is *metric*, inall other cases the problem is *non-metric*.
 
-If the dissimilarities are known numbers the MDS problem is *metric*, if 
-
-Suppose $I_n=\{1,2,\cdots,n\}$ and $\mathcal{K}$ is a subset of $I_n\times I_n$ of size $m$. For all with $(i,j)\in\mathcal{K}$
-we have $i>j$.
+The quality of the approximation is given by the least squares loss function
 \begin{equation}
-\sigma(X,\Delta):=\frac{\sum_{(i,j)\in\mathcal{K}}w_{ij}(\delta_{ij}-d_{ij}(X))^2}{\sum_{(i,j)\in\mathcal{K}}w_{ij}\delta_{ij}^2}.
+\sigma(X,\Delta):=\frac{\sum_{k=1}^mw_k(\delta_k-d_k(X))^2}{\sum_{k=1}^mw_k\delta_k^2},
 \label{eq-stressdef}
 \end{equation}
+
 In \eqref{eq-stressdef}
 
-* $\delta_{ij}$ are $m$ non-negative *pseudo-distances*;
-* $w_{ij}$ are $m$ positive *weights*;
-* $X$ is an $n\times p$ *configuration matrix*, with coordinates of $n$ *points* in $\mathbb{R}^p$;
-* $d_{ij}(X)$ are the (Euclidean) *distances* between the rows of the configuration matrix.
+* $\delta_k$ are $m$ non-negative *pseudo-distances*;
+* $w_k$ are $m$ positive *weights*;
+* $X$ is an $n\times p$ *configuration*, with coordinates of $n$ *points* in $\mathbb{R}^p$;
+* $d_k(X)$ are the (Euclidean) *distances* between the rows of the configuration matrix.
 
-Thus
-\begin{equation}
-d_{ij}(X):=\sqrt{\sum_{s=1}^p(x_{is}-x_{js})^2}.\label{eq-distdef}
-\end{equation}
-
-The (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional) MDS problem is to minimize $\sigma$ of \eqref{eq-stressdef} over all $n\times p$ configurations and over a set $\mathcal{D}\in\mathbb{R}^m_+$ of non-negative  
-pseudo-distances. 
-An MDS problem is *unweighted* if all $w_{ij}$ are equal, otherwise it is *weighted*. An MDS problem is *metric* if
-the set $\mathcal{D}$ of dissimilarities is a singleton, otherwise it is *non-metric*.
+The (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional) MDS problem is to minimize $\sigma$ of \eqref{eq-stressdef} over all $n\times p$ configurations and over the set $\Delta\in\mathbb{R}^m_+$ of non-negative pseudo-distances. 
 
 
 # MDS Data Structure
@@ -109,17 +97,14 @@ small <- as.dist(matrix(
   c(0, 1, 3, 2, 1, 0, 1, 3, 3, 1, 0, 1, 2, 3, 1, 0), 4, 4))
 print(small)
 ```
-Turn this into MDS data with the utility *makeMDSData()*.
+Turn this into MDS data with the utility makeMDSData().
 ```{r smalldata}
 smallData <- makeMDSData(small)
 print(smallData)
 ```
-Note that the data in column *delta* are sorted, and that *blocks* has tie blocks. This is always
-the case, even for a metric MDS, because the information will be useful for plotting routines
-later on. Also, the *weights* are always there in some form, even if our MDS analysis will be
-unweighted.
+Note that the data in column *delta* are increasing, and that *blocks* has tie blocks. Also, the *weights* are always there in some form or another, even for MDS analyses that are unweighted (i.e. when all $w_k$ are equal).
 
-*makeMDSData()* can handle missing data and nontrivial weights. If our example is
+makeMDSData() can handle missing data and nontrivial weights. If our example is
 ```{r smallmis, echo = FALSE}
 smallmis <- small
 smallmis[1] <- smallmis[3] <- NA
@@ -156,32 +141,32 @@ Now *makeMDSData* gives
 rectData <- makeMDSData(rect, weights)
 print(rectData)
 ```
-Handling rectangular data with square symmetric MDS is consequently possible, but it is inefficient
-and better to use the smacof programs specifically intended for rectangular data.
+Handling rectangular data with square symmetric MDS is inefficient
+and it is better to use the smacof programs specifically intended for rectangular data.
 
 It is of course also possible to construct MDS data sets of this form in other ways, and to edit
-MDS data sets. As long as the conventions are obeyed that no index pair $(i,j)$ occurs more than once, that the dissimilarities are sorted, and that the tie blocks faithfully reflect ties in the sorted dissimilarities. We do need $i\neq j$, but it is not necessary that always $i>j$.
+the MDS data sets generated by makeMDSData(). As long as the conventions are obeyed that no index pair $(i,j)$ occurs more than once, that the dissimilarities are sorted, and that the tie blocks faithfully reflect ties in the sorted dissimilarities. We do need $i\neq j$, but it is not necessary that always $i>j$.
 
 # Arguments
 
-The *smacofSS* function has the following arguments.
+The smacofSS() function has the following arguments.
 
 Four functions
 
 1. *theData*, an MDS data structure.  
 2. *ndim*, dimensionality of MDS analysis.
-3. *xold*, initial configuration, an *nobj* by *ndim* matrix.
+3. *xinit*, initial configuration, an *nobj* by *ndim* matrix.
 4. *weighted*, TRUE/FALSE for weighted/unweighted least squares.
-5. *ordinal*, TRUE/FALSE for ordinal/numerical.
-6. *ties*, primary (1), secondary(2), or tertiary (3) approaches. 
+5. *ordinal*, FALSE or 0 for numerical, 1,2,3 for ordinal.
 7. *itmax*, maximum number of iterations.
 8. *eps*, if loss changes less than *eps*, stop.
-9. *verbose*, TRUE/FALSE print iteration info to *stdout*.
+9. *digits*
+10. *width*
+11. *verbose*, TRUE/FALSE print iteration info to *stdout*.
 
 # Details
 
-
- The terminology in
+The terminology in
 *ties* refers to @deleeuw_A_77.
 
 # Value
@@ -240,7 +225,7 @@ xinit <- torgerson(morseData, 2)
 
 ```{r compUR, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
-h2 <- smacofSSUR(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
+h2 <- smacofSSUR(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -249,7 +234,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 
 ```{r compUO1, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
+h2 <- smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -257,7 +242,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 ```
 ```{r compUO2, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
+h2 <- smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -265,7 +250,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 ```
 ```{r compUO3, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
+h2 <- smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -274,7 +259,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 
 ```{r compWR, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000)
-h2 <- smacofSSWR(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
+h2 <- smacofSSWR(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -283,7 +268,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 
 ```{r compWO1, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ordinal", ties = "primary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
-h2 <- smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
+h2 <- smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -291,7 +276,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 ```
 ```{r compWO2, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ordinal", ties = "secondary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
-h2 <- smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
+h2 <- smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
 hh <- c(h1$stress, h1$niter, h2$loss, h2$itel)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
@@ -300,7 +285,7 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 ```
 ```{r compWO3, cache = FALSE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ordinal", ties = "tertiary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
-h2 <- smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
+h2 <- smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
 cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
     formatC(h1$niter, width = 6, format = "d"),
     formatC(h2$loss, digits = 10, width = 15, format = "f"),
@@ -312,23 +297,23 @@ cat(formatC(h1$stress ^ 2, digits = 10, width = 15, format = "f"),
 ```{r microbenchmark_num, cache = TRUE, echo = FALSE}
 microbenchmark(
 smacofSym(morse, type = "ratio", eps = 1e-10, itmax = 1000),
-smacofSSUR(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUR(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 ```{r microbenchmark_ord1, cache = TRUE, echo = FALSE}
 microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000),
-smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 ```
 ```{r microbenchmark_ord2, cache = TRUE, echo = FALSE}
 microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000),
-smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
 ```
 ```{r microbenchmark_ord3, cache = TRUE, echo = FALSE}
 microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000),
-smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 
@@ -336,13 +321,13 @@ smacofSSUO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 
 ```{r wgthnum, cache = TRUE, echo = FALSE}
 microbenchmark(
 smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSSWR(morseData, ndim = 2,  xold = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWR(morseData, ndim = 2,  xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 ```{r wgthord1, cache = TRUE, echo = FALSE}
 microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 ```
 
 ```{r wgthord2, cache = TRUE, echo = FALSE}
@@ -351,7 +336,7 @@ smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, weightmat = 
 smacofSSWO(
   morseData,
   ndim = 2,
-  xold = xinit,
+  xinit = xinit,
   eps = 1e-10,
   itmax = 1000,
   ties = 2,
@@ -361,7 +346,7 @@ smacofSSWO(
 ```{r wgthord3, cache = TRUE, echo = TRUE}
 microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSSWO(morseData, ndim = 2, xold = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
+smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 ```
 ```{r table, echo = FALSE}
 rnames = c(
