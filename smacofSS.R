@@ -1,5 +1,4 @@
 source("smacofUtils.R")
-source("smacofSSData.R")
 
 smacofSS <- function(theData,
                      ndim = 2,

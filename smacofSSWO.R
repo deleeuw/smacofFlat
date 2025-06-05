@@ -63,24 +63,20 @@ smacofSSWO <- function(theData,
     xold = as.double(xold),
     xnew = as.double(xnew)
   )
-  if (ties == 1) {
-    for (k in 1:ndat) {
-      theData[k, 1] <- iind[k]
-      theData[k, 2] <- jind[k]
-      theData[k, 5] <- wght[k]
-    }
-  }
   return(
     list(
-      data = theData,
+      delta = theData[, 3],
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
+      weightmat = h$wght,
       stress = h$snew,
       ndim = ndim,
       init = xinit,
       niter = h$itel,
       nobj = nobj,
+      iind = h$iind,
+      jind = h$jind,
       weighted = TRUE,
       ordinal = TRUE
     )

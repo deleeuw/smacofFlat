@@ -55,7 +55,7 @@ smacofSSUR <- function(theData,
   )
   return(
     list(
-      data = theData,
+      delta = theData[, 3],
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
@@ -64,6 +64,8 @@ smacofSSUR <- function(theData,
       init = xinit,
       niter = h$itel,
       nobj = nobj,
+      iind = h$iind,
+      jind = h$jind,
       weighted = FALSE,
       ordinal = FALSE
     )

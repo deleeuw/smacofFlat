@@ -57,15 +57,9 @@ smacofSSUO <- function(theData,
     xold = as.double(xold),
     xnew = as.double(xnew)
   )
-  if (ties == 1) {
-    for (k in 1:ndat) {
-      theData[k, 1] <- iind[k]
-      theData[k, 2] <- jind[k]
-      }
-  }
   return(
     list(
-      data = theData,
+      delta = theData[, 3],
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
@@ -74,6 +68,8 @@ smacofSSUO <- function(theData,
       init = xinit,
       niter = h$itel,
       nobj = nobj,
+      iind = h$iind,
+      jind = h$jind,
       weighted = FALSE,
       ordinal = TRUE
     )

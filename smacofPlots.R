@@ -9,9 +9,9 @@ smacofShepardPlot <-
            lwd = 2,
            cex = 1,
            pch = 16) {
-    maxDelta <- max(h$data[, 3])
-    minDelta <- min(h$data[, 3])
-    x <- h$data[, 3]
+    maxDelta <- max(h$delta)
+    minDelta <- min(h$delta)
+    x <- h$delta
     y <- h$dhat
     z <- h$confdist
     plot(
@@ -86,12 +86,14 @@ smacofDistDhatPlot <- function(h,
                                cex = 1.0,
                                lwd = 2,
                                pch = 16) {
-  par(pty = "s")
+  uppe <- max(c(h$confdist, h$dhat))
   plot(
     h$confdist,
     h$dhat,
     xlab = "distance",
     ylab = "disparity",
+    xlim = c(0, uppe),
+    ylim = c(0, uppe),
     main = main,
     cex = cex,
     pch = pch,

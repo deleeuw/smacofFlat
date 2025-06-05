@@ -61,7 +61,7 @@ smacofSSWR <- function(theData,
   )
   return(
     list(
-      data = theData,
+      delta = theData[, 3],
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
@@ -70,6 +70,8 @@ smacofSSWR <- function(theData,
       init = xinit,
       niter = h$itel,
       nobj = nobj,
+      iind = h$iind,
+      jind = h$jind,
       weighted = TRUE,
       ordinal = FALSE
     )

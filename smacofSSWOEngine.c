@@ -77,18 +77,15 @@ void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         }
         smid /= *wsum;
         double *wwrk = (double *)calloc(Ndat, sizeof(double));
-        for (int k = 0; k < Ndat; k++) {
-            wwrk[k] = wght[k];
-        }
         dhat = memcpy(dhat, edis, (size_t)(Ndat * sizeof(double)));
         if (*ties == 1) {
-            (void)primaryApproach(ndat, blks, dhat, wwrk, edis, iind, jind);
+            (void)primaryApproach(ndat, blks, dhat, wght, edis, iind, jind);
         }
         if (*ties == 2) {
-            (void)secondaryApproach(ndat, blks, dhat, wwrk);
+            (void)secondaryApproach(ndat, blks, dhat, wght);
         }
         if (*ties == 3) {
-            (void)tertiaryApproach(ndat, blks, dhat, wwrk);
+            (void)tertiaryApproach(ndat, blks, dhat, wght);
         }
         double ssq = 0.0;
         for (int k = 0; k < Ndat; k++) {
