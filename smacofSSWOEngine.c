@@ -45,6 +45,9 @@ void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
                 js += Nobj;
             }
         }
+        for (int k = 0; k < Nobj * Ndim; k++) {
+            xnew[k] = 0.0;
+        }
         int k = 0;
         for (int j = 0; j < Nobj - 1; j++) {
             for (int i = j + 1; i < Nobj; i++) {
@@ -76,7 +79,6 @@ void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
             smid += wght[k] * SQUARE(dhat[k] - edis[k]);
         }
         smid /= *wsum;
-        double *wwrk = (double *)calloc(Ndat, sizeof(double));
         dhat = memcpy(dhat, edis, (size_t)(Ndat * sizeof(double)));
         if (*ties == 1) {
             (void)primaryApproach(ndat, blks, dhat, wght, edis, iind, jind);
@@ -105,13 +107,9 @@ void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        for (int k = 0; k < Nobj * Ndim; k++) {
-            xold[k] = xnew[k];
-            xnew[k] = 0.0;
-        }
+        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
-        free(wwrk);
     }
 }
 

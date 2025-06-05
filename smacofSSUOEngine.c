@@ -30,6 +30,9 @@ void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
                       double *xold, double *xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
     while (true) {
+        for (int k = 0; k < Nobj * Ndim; k++) {
+            xnew[k] = 0.0;
+        }
         for (int k = 0; k < Ndat; k++) {
             if (edis[k] == 0.0) {
                 continue;
@@ -98,10 +101,7 @@ void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        for (int k = 0; k < Nobj * Ndim; k++) {
-            xold[k] = xnew[k];
-            xnew[k] = 0.0;
-        }
+        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
         free(wght);

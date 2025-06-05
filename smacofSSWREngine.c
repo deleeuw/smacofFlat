@@ -28,6 +28,9 @@ void smacofSSWREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
                 js += Nobj;
             }
         }
+        for (int k = 0; k < Nobj * Ndim; k++) {
+            xnew[k] = 0.0;
+        }
         int k = 0;
         for (int j = 0; j < Nobj - 1; j++) {
             for (int i = j + 1; i < Nobj; i++) {
@@ -66,10 +69,7 @@ void smacofSSWREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        for (int k = 0; k < Nobj * Ndim; k++) {
-            xold[k] = xnew[k];
-            xnew[k] = 0.0;
-        }
+        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
     }
