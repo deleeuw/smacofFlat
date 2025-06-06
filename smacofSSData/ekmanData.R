@@ -1,4 +1,5 @@
 data(ekman, package = "smacof")
-ekmanData <- makeMDSData((1 - ekman)^3)
+ekman <- 1 - ekman
+ekmanData <- makeMDSData(ekman, ekman ^ 2)
 ekmanLabels <- as.character(attr(ekman, "Labels"))
 

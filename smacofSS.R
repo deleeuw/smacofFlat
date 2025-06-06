@@ -1,4 +1,7 @@
 source("smacofAuxiliaries.R")
+source("smacofDataUtilities.R")
+source("smacofPlots.R")
+
 
 smacofSS <- function(theData,
                      ndim = 2,

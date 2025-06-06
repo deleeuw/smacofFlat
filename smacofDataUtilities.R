@@ -1,4 +1,5 @@
 
+
 makeMDSData <- function(delta, weights = NULL) {
   nobj <- attr(delta, "Size")
   if (is.null(weights)) {
@@ -8,7 +9,8 @@ makeMDSData <- function(delta, weights = NULL) {
   k <- 1
   for (j in 1:(nobj - 1)) {
     for (i in (j + 1):nobj) {
-      if ((weights[k] > 0) && (!is.na(weights[k])) && (!is.na(delta[k]))) {
+      if ((weights[k] > 0) &&
+          (!is.na(weights[k])) && (!is.na(delta[k]))) {
         theData <- rbind(theData, c(i, j, delta[k], 0, weights[k]))
       }
       k <- k + 1
@@ -27,22 +29,29 @@ makeMDSData <- function(delta, weights = NULL) {
       break
     }
   }
-  return(theData)
+  result <- list(
+    iind = theData[, 1],
+    jind = theData[, 2],
+    delta = theData[, 3],
+    blocks = theData[, 4],
+    weights = theData[, 5],
+    nobj = nobj,
+    ndat = ndat
+  )
+  class(result) <- "smacofSSData"
+  return(result)
 }
 
-
-
 fromMDSData <- function(theData) {
-  ndat <- nrow(theData)
-  nobj <- (1 + sqrt(1 + 8 * ndat)) / 2
+  ndat <-theData$ndat
+  nobj <- theData$nobj
   delta <- matrix(0, nobj, nobj)
   weights <- matrix(0, nobj, nobj)
   for (k in 1:ndat) {
-    i <- theData[k, 1]
-    j <- theData[k, 2]
-    delta[i, j] <- delta[j, i] <- theData[k, 3]
-    weights[i, j] <- weights[j, i] <- theData[k, 5]
+    i <- theData$iind[k]
+    j <- theData$jind[k]
+    delta[i, j] <- delta[j, i] <- theData$delta[k]
+    weights[i, j] <- weights[j, i] <- theData$weights[k]
   }
   return(list(delta = as.dist(delta), weights = as.dist(weights)))
 }
-

@@ -1,6 +1,8 @@
 dyn.load("smacofSSWREngine.so")
 
 source("smacofAuxiliaries.R")
+source("smacofDataUtilities.R")
+source("smacofPlots.R")
 
 smacofSSWR <- function(theData,
                        ndim = 2,
@@ -11,13 +13,13 @@ smacofSSWR <- function(theData,
                        width = 15,
                        verbose = TRUE) {
   xold <- xinit
-  nobj <- nrow(xold)
-  ndat <- nrow(theData)
+  nobj <- theData$nobj
+  ndat <- theData$ndat
   itel <- 1
-  iind <- theData[, 1]
-  jind <- theData[, 2]
-  dhat <- theData[, 3]
-  wght <- theData[, 5]
+  iind <- theData$iind
+  jind <- theData$jind
+  dhat <- theData$delta
+  wght <- theData$weights
   wsum <- sum(wght)
   vinv <- makeMPInverseV(theData)
   edis <- rep(0, ndat)
@@ -59,22 +61,22 @@ smacofSSWR <- function(theData,
     xold = as.double(xold),
     xnew = as.double(xnew)
   )
-  return(
-    list(
-      delta = theData[, 3],
-      dhat = h$dhat,
-      confdist = h$edis,
-      conf = matrix(h$xnew, nobj, ndim),
-      weightmat = theData[, 5],
-      stress = h$snew,
-      ndim = ndim,
-      init = xinit,
-      niter = h$itel,
-      nobj = nobj,
-      iind = h$iind,
-      jind = h$jind,
-      weighted = TRUE,
-      ordinal = FALSE
-    )
+  result <- list(
+    delta = theData$delta,
+    dhat = h$dhat,
+    confdist = h$edis,
+    conf = matrix(h$xnew, nobj, ndim),
+    weightmat = theData$weights,
+    stress = h$snew,
+    ndim = ndim,
+    init = xinit,
+    niter = h$itel,
+    nobj = nobj,
+    iind = h$iind,
+    jind = h$jind,
+    weighted = TRUE,
+    ordinal = FALSE
   )
+  class(result) <- c("smacofSSResult", "smacofSSWRResult")
+  return(result)
 }

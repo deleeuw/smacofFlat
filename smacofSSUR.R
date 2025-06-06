@@ -1,6 +1,8 @@
 dyn.load("smacofSSUREngine.so")
 
 source("smacofAuxiliaries.R")
+source("smacofDataUtilities.R")
+source("smacofPlots.R")
 
 smacofSSUR <- function(theData,
                        ndim = 2,
@@ -11,12 +13,12 @@ smacofSSUR <- function(theData,
                        width = 15,
                        verbose = TRUE) {
   xold <- xinit
-  nobj <- nrow(xold)
-  ndat <- nrow(theData)
+  nobj <- theData$nobj
+  ndat <- theData$ndat
   itel <- 1
-  iind <- theData[, 1]
-  jind <- theData[, 2]
-  dhat <- theData[, 3]
+  iind <- theData$iind
+  jind <- theData$jind
+  dhat <- theData$delta
   edis <- rep(0, ndat)
   for (k in 1:ndat) {
     i <- iind[k]
@@ -53,22 +55,22 @@ smacofSSUR <- function(theData,
     xold = as.double(xold),
     xnew = as.double(xnew)
   )
-  return(
-    list(
-      delta = theData[, 3],
-      dhat = h$dhat,
-      confdist = h$edis,
-      conf = matrix(h$xnew, nobj, ndim),
-      weightmat = theData[, 5],
-      stress = h$snew,
-      ndim = ndim,
-      init = xinit,
-      niter = h$itel,
-      nobj = nobj,
-      iind = h$iind,
-      jind = h$jind,
-      weighted = FALSE,
-      ordinal = FALSE
-    )
+  result <- list(
+    delta = theData$delta,
+    dhat = h$dhat,
+    confdist = h$edis,
+    conf = matrix(h$xnew, nobj, ndim),
+    weightmat = theData$weights,
+    stress = h$snew,
+    ndim = ndim,
+    init = xinit,
+    niter = h$itel,
+    nobj = nobj,
+    iind = h$iind,
+    jind = h$jind,
+    weighted = FALSE,
+    ordinal = FALSE
   )
+  class(result) <- c("smacofSSResult", "smacofSSURResult")
+  return(result)
 }

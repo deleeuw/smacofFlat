@@ -1,13 +1,13 @@
 library(RSpectra)
 
 makeMPInverseV <- function(theData) {
-  nobj <- max(theData[, 1:2])
-  ndat <- nrow(theData)
+  nobj <- theData$nobj
+  ndat <- theData$ndat
   wght <- matrix(0, nobj, nobj)
   for (k in 1:ndat) {
-    i <- theData[k, 1]
-    j <- theData[k, 2]
-    wght[i, j] <- wght[j, i] <- theData[k, 5]
+    i <- theData$iind[k]
+    j <- theData$jind[k]
+    wght[i, j] <- wght[j, i] <- theData$weights[k]
   }
   vmat <- -wght
   diag(vmat) <- -rowSums(vmat)
@@ -16,15 +16,15 @@ makeMPInverseV <- function(theData) {
 }
 
 torgerson <- function(theData, ndim) {
-  nobj <- max(theData[, 1])
+  nobj <- theData$nobj
   dmat <- matrix(0, nobj, nobj)
-  ndat <- nrow(theData)
-  mdel <- mean(theData[, 3])^2
+  ndat <- length(theData$iind)
+  mdel <- mean(theData$delta)^2
   dmat <- mdel * (1 - diag(nobj))
   for (k in 1:ndat) {
-    i <- theData[k, 1]
-    j <- theData[k, 2]
-    dmat[i, j] <- dmat[j, i] <- theData[k, 3]
+    i <- theData$iind
+    j <- theData$jind
+    dmat[i, j] <- dmat[j, i] <- theData$delta[k]
   }
   dmat <- dmat^2
   dr <- apply(dmat, 1, mean)

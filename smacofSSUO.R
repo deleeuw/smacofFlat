@@ -1,22 +1,26 @@
 dyn.load("smacofSSUOEngine.so")
 
+source("smacofAuxiliaries.R")
+source("smacofDataUtilities.R")
+source("smacofPlots.R")
+
 smacofSSUO <- function(theData,
                        ndim = 2,
                        xinit = torgerson(theData, ndim),
                        ties = 1,
                        itmax = 1000,
                        eps = 1e-10,
-                       digits = 10, 
+                       digits = 10,
                        width = 15,
                        verbose = TRUE) {
   xold <- xinit
-  nobj <- nrow(xold)
-  ndat <- nrow(theData)
+  nobj <- theData$nobj
+  ndat <- theData$ndat
   itel <- 1
-  iind <- theData[, 1]
-  jind <- theData[, 2]
-  dhat <- theData[, 3]
-  blks <- theData[, 4]
+  iind <- theData$iind
+  jind <- theData$jind
+  dhat <- theData$delta
+  blks <- theData$blocks
   edis <- rep(0, ndat)
   for (k in 1:ndat) {
     i <- iind[k]
@@ -55,22 +59,22 @@ smacofSSUO <- function(theData,
     xold = as.double(xold),
     xnew = as.double(xnew)
   )
-  return(
-    list(
-      delta = theData[, 3],
-      dhat = h$dhat,
-      confdist = h$edis,
-      conf = matrix(h$xnew, nobj, ndim),
-      weightmat = theData[, 5],
-      stress = h$snew,
-      ndim = ndim,
-      init = xinit,
-      niter = h$itel,
-      nobj = nobj,
-      iind = h$iind,
-      jind = h$jind,
-      weighted = FALSE,
-      ordinal = TRUE
-    )
+  result <- list(
+    delta = theData$delta,
+    dhat = h$dhat,
+    confdist = h$edis,
+    conf = matrix(h$xnew, nobj, ndim),
+    weightmat = theData$weights,
+    stress = h$snew,
+    ndim = ndim,
+    init = xinit,
+    niter = h$itel,
+    nobj = nobj,
+    iind = h$iind,
+    jind = h$jind,
+    weighted = FALSE,
+    ordinal = TRUE
   )
+  class(result) <- c("smacofSSResult", "smacofSSUOResult")
+  return(result)
 }
