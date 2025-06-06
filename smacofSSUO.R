@@ -1,7 +1,5 @@
 dyn.load("smacofSSUOEngine.so")
 
-source("smacofUtils.R")
-
 smacofSSUO <- function(theData,
                        ndim = 2,
                        xinit = torgerson(theData, ndim),
@@ -63,6 +61,7 @@ smacofSSUO <- function(theData,
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
+      weightmat = theData[, 5],
       stress = h$snew,
       ndim = ndim,
       init = xinit,

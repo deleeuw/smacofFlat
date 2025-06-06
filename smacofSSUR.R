@@ -1,6 +1,6 @@
 dyn.load("smacofSSUREngine.so")
 
-source("smacofUtils.R")
+source("smacofAuxiliaries.R")
 
 smacofSSUR <- function(theData,
                        ndim = 2,
@@ -59,6 +59,7 @@ smacofSSUR <- function(theData,
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
+      weightmat = theData[, 5],
       stress = h$snew,
       ndim = ndim,
       init = xinit,

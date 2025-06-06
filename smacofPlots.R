@@ -17,7 +17,7 @@ smacofShepardPlot <-
     plot(
       rbind(cbind(x, z), cbind(x, y)),
       xlim = c(minDelta, maxDelta),
-      ylim = c(0, max(c(h$edis, h$dhat))),
+      ylim = c(0, max(c(h$confdist, h$dhat))),
       xlab = "delta",
       ylab = "dhat and dist",
       main = main,

@@ -1,6 +1,6 @@
 dyn.load("smacofSSWREngine.so")
 
-source("smacofUtils.R")
+source("smacofAuxiliaries.R")
 
 smacofSSWR <- function(theData,
                        ndim = 2,
@@ -65,6 +65,7 @@ smacofSSWR <- function(theData,
       dhat = h$dhat,
       confdist = h$edis,
       conf = matrix(h$xnew, nobj, ndim),
+      weightmat = theData[, 5],
       stress = h$snew,
       ndim = ndim,
       init = xinit,
