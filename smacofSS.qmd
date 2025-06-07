@@ -39,7 +39,7 @@ papersize: letter
 graphics: true
 link-citations: true
 mainfont: Times New Roman
-abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for   square symmetric data as four monolithic C programs, with R used for taking care of the setup, the    I/O, and of issuing a single call to .C() to start the computations. This makes the programs five to fifteen times as fast (for our examples) as the smacofSym() function from the R smacof package.
+abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for   square symmetric data as four monolithic C programs, with R used for taking care of the setup, the I/O, and of issuing a single call to .C() to start the computations. This makes the programs five to fifty times as fast (for our examples) as the smacofSym() function from the R smacof package.
 ---
 
 ```{r loadpackages, echo = FALSE}
@@ -70,7 +70,13 @@ options(warn = -1)
 
 # Introduction
 
-The data in MDS is qualitative or quantitative information about the *dissimilarities* $\delta_k$ between $m$ pairs of objects $(i,j)$, with the objects coming from a set of $n$ objects. The information about the dissimilarities is of the form $\delta\in\Delta$, where $\Delta$ is a known subset of the non-negative orthant of $\mathbb{R}^m$. In MDS we want to map the objects into points in $p$-dimensional Euclidean space in such a way that the distances $d_k$ between the points approximate the dissimilarities $\delta_k$. If the dissimilarities are known numbers and $\Delta$ has only a single element the MDS problem is *metric*, in all other cases the problem is *non-metric*.
+In Multidimensional Scaling (MDS) we start with $n$ *objects*. Objects can be anything: people, animals, molecules, locations, time points, stimuli, political parties, and so on. We have information about the
+*similarities* or *dissimilarities* of some or all of the $\squash{\binom{n}{2}}$ pairs of objects.
+Say we have information about $m$ dissimilarities $\delta_k$, with $k=1,\cdots m$. Thus each index $k$ refers
+to a pair of indices $(i,j)$, with $1\leq i\leq n$ and $1\leq j\leq n$. The information is of the form $\delta\in\Delta$, where $\Delta$ is a known subset of the non-negative orthant of $\mathbb{R}^m$. 
+If the dissimilarities are known numbers and $\Delta$ has only a single element the MDS problem is *metric*, in all other cases the problem is *non-metric*.
+
+In MDS we want to map the objects into *points* in $p$-dimensional Euclidean space in such a way that the distances $d_k$ between the points approximate the dissimilarities $\delta_k$. If the dissimilarities are known numbers and $\Delta$ has only a single element the MDS problem is *metric*, in all other cases the problem is *non-metric*.
 
 The quality of the approximation is given by the least squares loss function\footnote{The symbol $:=$ is used for definitions.} \begin{equation}
 \sigma(X,\Delta):=\frac{\sum_{k=1}^mw_k(\delta_k-d_k(X))^2}{\sum_{k=1}^mw_k\delta_k^2},
@@ -184,7 +190,7 @@ smacofSS() is a front end that reads the parameters of the problem and then call
 
 Although using four separate programs involves duplicating some code it does allow us to make the programs smaller and faster. For example, we are not have to do weighted updates with unit weights in the unweighted case, and we don't have to branch each time for either ordinal and numerical.
 
-In what follows "foo" can be "UR", "WR", "UO", or "WO". Each of the four R programs smacofSSfoo() calls a corresponding shared library, called smacofSSURfooEngine.so, which contains the compiled code of the C routine smacofSSfooEngine().
+In what follows "foo" can be "UR", "WR", "UO", or "WO". Each of the four R programs smacofSSfoo() calls a corresponding shared library, called smacofSSfooEngine.so, which contains the compiled code of the C routine smacofSSfooEngine().
 
 Each of the four R programs smacofSSfoo() can also be called directly, without using the smacofSS() frontend. Their arguments are the same as for smacofSS(), except that *weighted* and *ordinal* are not there, while smacofSSUO() and smacofSSWO() have the additional argument *ties*, equal to 1 (default), 2, or 3.
 
@@ -194,9 +200,9 @@ Each of the four R programs smacofSSfoo() can also be called directly, without u
 
 The C routines smacofSSfooEngine() by themselves are complete smacof MDS programs. It would be easy to write main programs in C that do the same job as the R frontend, and compile to stand-alone executables.
 
-The C code uses the .C() calling conventions and is otherwise not dependent on R in any way. It is important that the .C() call from R is only executed one time in a smacofSS() job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a .C() call to update the configation and in the ordinal case an additional .C() call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to smacofSym().
+The C code uses the .C() calling conventions and is otherwise not dependent on R in any way. It is important that the .C() call from R is only executed one time in a smacofSS() job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a .C() call to update the configuration and in the ordinal case an additional .C() call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to smacofSym().
 
-If *ordinal* is TRUE the monotone regression in each iteration uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()* algorithm is called in three separate C routines *primaryApproach()*, *secondaryApproach()*, and *tertiaryApproach()*, which in turn are called in each iteration by the smacofSSUOEngine() or smacofSSWOEngine() C routines.
+If *ordinal* is TRUE the monotone regression in each iteration uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()* algorithm is called in three separate C routines *primaryApproach()*, *secondaryApproach()*, and *tertiaryApproach()*, which in their turn are called in each iteration by the smacofSSUOEngine() or smacofSSWOEngine() C routines.
 
 The default initial configuration is computed by the *torgerson()* routine in *smacofUtils.R*. This is classical MDS, with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24).
 
@@ -231,8 +237,8 @@ One important special case should be kept in mind. In the ordinal case with the 
 
 There are two functions in smacofDataUtilities.R
 
-2.  makeMDSData(delta, weights = NULL). Returns MDS data structure from dist objects.
-3.  fromMDSData(theData). Returns dist objects of dissimilarities and weights from MDS data structure.
+1.  makeMDSData(delta, weights = NULL). Returns MDS data structure from dist objects.
+2.  fromMDSData(theData). Returns dist objects of dissimilarities and weights from MDS data structure.
 
 ## Auxilaries
 
@@ -277,7 +283,7 @@ Dissimilarities of nine Dutch political parties in 1967, from @degruijter_67. Co
 
 ## Wish Data
 
-Rating scale imilarities between 12 nations, collected by @wish_71. Averaged over subects, subtracted from maximum scale value to form dissimilarities.
+Rating scale similarities between 12 nations, collected by @wish_71. Averaged over subjects, subtracted from maximum scale value to form dissimilarities.
 
 ## Iris Data
 
@@ -289,7 +295,7 @@ Classical iris data from @anderson_36 via @fisher_36. Euclidean distances over f
 
 ## Outcome
 
-In this section we compare the output (final stress, number of iterations) of smacofSym() and smacofSS() using the Ekman and Morse data. Note that smacofSym() takes the square root of the final stress, following @kruskal_64a, so for comparison purposes we square it again. All runs are started with the two-dimensional torgerson solution and have the stop criteria *eps* equal to 1e-10 and *itmax* equal to 1000 (except when using the tertiary approach when *itmax* is 10000). In the weighted case the weights for Ekman are $w_{ij}=\delta_{ij}^2$ and those for Morse are $w_{ij}=\delta_{ij}^{-1}$.
+In this section we compare the output (final stress, number of iterations) of smacofSym() and smacofSS() using the Ekman and Morse data. Note that smacofSym() reports the square root of the final stress, following @kruskal_64a, so for comparison purposes we square it again. All runs are started with the two-dimensional torgerson solution and have the stop criteria *eps* equal to 1e-10 and *itmax* equal to 1000 (except when using the tertiary approach when *itmax* is 10000). In the weighted case the weights for Ekman are $w_k=\delta_k^2$ and those for Morse are $w_k=\delta_k^{-1}$.
 
 ```{r somedataE, echo = FALSE}
 source("smacofSSData/ekmanData.R")
@@ -431,11 +437,11 @@ colnames(x) <- r
 kable(x, format = "simple", align = NULL, row.names = TRUE, caption = "Comparison smacofSym() and smacofSS() results Morse data")
 ```
 
-The conclusion is clear. For the Ekman and Morse examples the results are identical.
+The conclusion is clear. For the Ekman and Morse examples the results of smacofSym() and smacofSS() are identical.
 
 ## Time
 
-The microbenchmark package (@mersmann_24) is really intended to time small pieces of code, not complete programs. Nevertheless we will use it to compare smacofSym() and smacofSS(). We again use the Ekman and Morse data with default options and use microbenchmark to find the median time for each of the runs.
+The microbenchmark package (@mersmann_24) is intended to time small pieces of code, not complete programs. Nevertheless we will use it to compare smacofSym() and smacofSS(), until something better comes along. We again use the Ekman and Morse data with default options. From the microbenchmark output we find the median time over 100 runs each of the two programs.
 
 ```{r microbenchmark_numE, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
@@ -717,5 +723,16 @@ smacofDistDhatPlot(hUO3, fitlines = FALSE, main = "DistDhat Plot, Morse Data, Un
 ```
 
 \sectionbreak
+
+```{r}
+source("smacofSSData/irisData.R")
+xinit <- torgerson(irisData, 2)
+h1 <- smacofSym(irisDist, ndim = 2, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
+h2 <- smacofSS(irisData, xinit = xinit, verbose = FALSE)
+print(h1$stress)
+print(h1$niter)
+print(h2$stress)
+print(h2$niter)
+```
 
 # References
