@@ -6,12 +6,15 @@ source("smacofPlots.R")
 
 smacofSSUR <- function(theData,
                        ndim = 2,
-                       xinit = torgerson(theData, ndim),
+                       xinit = NULL,
                        itmax = 1000,
                        eps = 1e-10,
                        digits = 10,
                        width = 15,
                        verbose = TRUE) {
+  if (is.null(xinit)) {
+    xinit <- smacofTorgerson(theData, 2)
+  }
   xold <- xinit
   nobj <- theData$nobj
   ndat <- theData$ndat

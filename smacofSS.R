@@ -2,10 +2,9 @@ source("smacofAuxiliaries.R")
 source("smacofDataUtilities.R")
 source("smacofPlots.R")
 
-
 smacofSS <- function(theData,
                      ndim = 2,
-                     xinit = torgerson(theData, ndim),
+                     xinit = NULL,
                      weighted = FALSE,
                      ordinal = FALSE,
                      itmax = 1000,
