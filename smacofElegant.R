@@ -2,9 +2,9 @@ library(RSpectra)
 
 smacofElegant <- function(theData,
                           ndim = 2,
-                          quick = FALSE,
                           itmax = 1000,
                           eps = 1e-10,
+                          quick = FALSE,
                           verbose = TRUE) {
   nobj <- theData$nobj
   ndat <- theData$ndat
@@ -12,11 +12,10 @@ smacofElegant <- function(theData,
   jind <- theData$jind
   wght <- theData$weights
   wsum <- sum(wght)
-  delta <- (theData$delta)^2
-  delta <- delta * sqrt(wsum / sum(wght * delta^2))
-  theData$delta <- delta
+  dhat <- (theData$delta)^2
+  dhat <- dhat * sqrt(wsum / sum(wght * dhat^2))
   cinit <- smacofDoubleCenter(theData)
-  lbda <- smacofBound(theData, quick)
+  lbda <- smacofBound(theData)
   evev <- eigs_sym(cinit, ndim)
   cinit <- tcrossprod(evev$vectors %*% diag(sqrt(evev$values)))
   dold <- rep(0, ndat)
@@ -25,7 +24,7 @@ smacofElegant <- function(theData,
     j <- jind[k]
     dold[k] = cinit[i, i] + cinit[j, j] - 2 * cinit[i, j]
   }
-  sold <- sum(wght * (delta - dold)^2) / wsum
+  sold <- sum(wght * (dhat - dold)^2) / wsum
   itel <- 1
   cold <- cinit
   repeat {
@@ -33,7 +32,7 @@ smacofElegant <- function(theData,
     for (k in 1:ndat) {
       i <- iind[k]
       j <- jind[k]
-      cmaj[i, j] <- cmaj[j, i] <- wght[k] * (delta[k] - dold[k])
+      cmaj[i, j] <- cmaj[j, i] <- wght[k] * (dhat[k] - dold[k])
     }
     cmaj <- -cmaj
     diag(cmaj) <- -rowSums(cmaj)
@@ -47,7 +46,7 @@ smacofElegant <- function(theData,
       j <- jind[k]
       dnew[k] = cnew[i, i] + cnew[j, j] - 2 * cnew[i, j]
     }
-    snew <- sum(wght * (delta - dnew)^2) / wsum
+    snew <- sum(wght * (dhat - dnew)^2) / wsum
     if (verbose) {
       cat(
         "itel ",
@@ -67,7 +66,21 @@ smacofElegant <- function(theData,
     sold <- snew
     cold <- cnew
   }
-  return(xvev)
+  result <- list(
+    delta = theData$delta,
+    dhat = dhat,
+    confdist = dnew,
+    conf = xvev,
+    weightmat = theData$weights,
+    stress = snew,
+    ndim = ndim,
+    niter = itel,
+    nobj = nobj,
+    iind = iind,
+    jind = jind
+  )
+  class(result) <- c("smacofSSResult", "smacofElegantResult")
+  return(result)
 }
 
 smacofDoubleCenter <- function(theData) {
@@ -75,12 +88,15 @@ smacofDoubleCenter <- function(theData) {
   ndat <- theData$ndat
   iind <- theData$iind
   jind <- theData$jind
-  delta <- (theData$delta)^2
+  wght <- theData$weights
+  wsum <- sum(wght)
+  dhat <- (theData$delta)^2
+  dhat <- dhat * sqrt(wsum / sum(wght * dhat^2))
   cini <- matrix(0, nobj, nobj)
   for (k in 1:ndat) {
     i <- iind[k]
     j <- jind[k]
-    cini[i, j] <- cini[j, i] <- delta[k]
+    cini[i, j] <- cini[j, i] <- dhat[k]
   }
   rc <- apply(cini, 1, mean)
   rm <- mean(cini)

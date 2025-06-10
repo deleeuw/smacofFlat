@@ -165,6 +165,29 @@ It is of course also possible to *smacofSSData* objects in other ways, and to ed
 
 \sectionbreak
 
+# Value
+
+The list of objects returned by *smacofSS()* mimics, as much as possible, the list returned by *smacofSym()*.
+
+1.  *delta*, dissimilarities, vector of length $m$.
+2.  *dhat*, final pseudo-distances, vector of length $m$.
+3.  *confdist*, final distances, vector of length $m$.
+4.  *conf*, final configuration, $n\times p$ matrix.
+5.  *weightmat*, weights, vector of length $m$.
+6.  *stress*, final stress.
+7.  *ndim*, number of dimensions.
+8.  *init*, initial configuration, $n\times p$ matrix..
+9.  *niter*, number of iterations.
+10. *nobj*, number of objects.
+11. *iind*, row indices, vector of length $m$.
+12. *jind*, column indices, vector of length $m$.
+13. *weighted*, was the analysis weighted.
+14. *ordinal*, was the analysis ordinal (and if so, which tie approach).
+
+One important special case should be kept in mind. In the ordinal case with the primary approach to ties, the data are (potentially) reordered within tie blocks in each iteration. In each iteration we have to reorder iind, jind, and in the weighted case the weights. There is no need to reorder delta and the blocks, because the only ordering changes are within blocks. Ultimately this means that if smacofSS() returns a list *h*, then *h*$iind*, *h$jind, and in the weighted case *h\$weightmat* will be ordered differently from the corresponding columns in the MDS data structure. No reordering is going on using the secondary and tertiary approaches.
+
+\sectionbreak
+
 # Arguments
 
 The smacofSS() function has the following arguments, with default values,
@@ -199,27 +222,45 @@ Each of the four R programs *smacofSSfoo()* can also be called directly, without
 
 # Details
 
+## Interface C and R
+
 The C routines *smacofSSfooEngine()* by themselves are complete smacof MDS programs. It would be easy to write main programs in C that do the same job as the R frontend, and compile to stand-alone executables.
 
 The C code uses the *.C()* calling conventions and is otherwise not dependent on R in any way. It is important that the *.C()* call from R is only executed one time in a *smacofSS()* job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a *.C()* call to update the configuration and in the ordinal case an additional *.C()* call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to the *smacofSym()* in the *smacof* package on CRAN
 (@deleeuw_mair_A_09c, @mair_groenen_deleeuw_A_22).
 
+## Monotone Regression
+
 If *ordinal* is TRUE the monotone regression in each iteration uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()* algorithm is called in three separate C routines *primaryApproach()*, *secondaryApproach()*, and *tertiaryApproach()*, which in their turn are called in each iteration by the *smacofSSUOEngine()* or *smacofSSWOEngine()* C routines.
+
+## Initial Configuration
+
+In terms of strategy we suggest that in an MDS analysis the researcher first computes one of more
+initial configurations (which are all independent MDS solutions anyway, except for the random 
+configuration), and then give one or more of these initial configurations as the *xinit* argument
+to *smacofSS()*.
+
+sstress
+
+### Torgerson
 
 The default initial configuration is set to NULL for *smacofSS()*. This is mean to emphasize the 
 importance of choosing an initial configuration. But to make life easier for the user if
-*xinit* is null, then an initial configuration is
-computed by the *smacofTorgerson()* routine in *smacofUtils.R*. 
+*xinit* is null, then an initial configuration is computed by the *smacofTorgerson()* routine in *smacofAuxiliaries.R*. 
+*smacofTorgerson()* is classical MDS, with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24). 
 
-*smacofTorgerson()* is classical MDS, with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24). The Torgerson configuration works best for complete and unweighted data, but may be satisfactory for a small number of randomly missing data and for weights that are not too unequal. Also remember that
+The Torgerson initial configuration works best for complete and unweighted data, but may also be satisfactory for a small number of randomly missing data and for weights that are not too unequal. Also remember that
 in the case of a really bad fit classical MDS may run into the problem of negative eigenvalues. 
 This will give the initial configuration a dimension less than $p$, and since smacof iterations
 never increase dimensionality this will mean the final configuration will also have dimension
 less than $p$. This makes the Torgerson initial configuration unsuitable, for example, for full-dimensional scaling (@deleeuw_groenen_mair_E_16e).
 
+### Guttman
 
 There are some additional initial configuration routines included. We can generate random missing data with 
 *smacofRandomConfiguration()* which is mainly useful for theoretical studies of convergence and local minima. The Guttman-Lingoes initial configuration (@guttman_68), which handles missing data and unequal weights, is provided as *smacofGuttman()*. It is closely related to Hayashi's Quantification Method IV (@takane_77) and does not have the negative eignevalue problem.
+
+### Elegant
 
 In addition there is *smacofElegant()*, which implements an optimized version of the algorithm of
 @deleeuw_U_75b, as described recently in @deleeuw_E_25c. *smacofElegant()* is a stand-alone iterative metric
@@ -236,30 +277,6 @@ initial configurations (which are all independent MDS solutions anyway, except f
 configuration), and then give one or more of these initial configurations as the *xinit* argument
 to *smacofSS()*.
 
-
-\sectionbreak
-
-# Value
-
-The list of objects returned by *smacofSS()* mimics, as much as possible, the list returned by *smacofSym()*.
-
-1.  *delta*, dissimilarities, vector of length $m$.
-2.  *dhat*, final pseudo-distances, vector of length $m$.
-3.  *confdist*, final distances, vector of length $m$.
-4.  *conf*, final configuration, $n\times p$ matrix.
-5.  *weightmat*, weights, vector of length $m$.
-6.  *stress*, final stress.
-7.  *ndim*, number of dimensions.
-8.  *init*, initial configuration, $n\times p$ matrix..
-9.  *niter*, number of iterations.
-10. *nobj*, number of objects.
-11. *iind*, row indices, vector of length $m$.
-12. *jind*, column indices, vector of length $m$.
-13. *weighted*, was the analysis weighted.
-14. *ordinal*, was the analysis ordinal (and if so, which tie approach).
-
-One important special case should be kept in mind. In the ordinal case with the primary approach to ties, the data are (potentially) reordered within tie blocks in each iteration. In each iteration we have to reorder iind, jind, and in the weighted case the weights. There is no need to reorder delta and the blocks, because the only ordering changes are within blocks. Ultimately this means that if smacofSS() returns a list *h*, then *h*$iind*, *h$jind, and in the weighted case *h\$weightmat* will be ordered differently from the corresponding columns in the MDS data structure. No reordering is going on using the secondary and tertiary approaches.
-
 \sectionbreak
 
 # Utilities
@@ -273,10 +290,10 @@ There are two functions in smacofDataUtilities.R
 
 ## Auxilaries
 
-There are several computational routines in *smacofUtils.R*. Ideally this should be C routines as well, but the R versions are only used once in a job and they rely on compiled code in their calculations anyway. So
+There are several computational routines in *smacofAuxiliaries.R*. Ideally this should be C routines as well, but the R versions are only used once in a job and they rely on compiled code in their calculations anyway. So
 translating them to C will be no major speedup.
 
-The Moore-Penrose inverse of $V$ uses the regular inverse $V^+=(V+n^{-1}ee')^{-1}-n^{-1}ee'$, which is valid because the weights are assumed to be irreducible (@deleeuw_C_77). It is the only place in *smacofSS()* where a full symmetric matrix of order $n$ is used. What is passed to C is the strictly lower-diagonal part of $V$ in a vector. The matrix multiplications in C by the $B$ matrix and the $V$ matrix do not need the diagonal elements.
+The Moore-Penrose inverse of $V$ uses the regular inverse $V^+=(V+n^{-1}ee')^{-1}-n^{-1}ee'$, which is valid because the weights are assumed to be irreducible (@deleeuw_C_77). It is the only place in *smacofSS()* where a full symmetric matrix of order $n$ is used. What is passed to C is the strictly lower-diagonal part of $V$ in a vector. The matrix multiplications in the C code by the $B$ matrix and the $V$ matrix do not need the diagonal elements.
 
 1.  *makeMPInverseV(theData)*. Returns vector with the lower diagonal of the Moore-Penrose inverse of $V$ matrix.
 2.  *smacofTorgerson(theData, ndim)*. Returns initial configuration in $nobj\times ndim$ matrix using classical MDS.
