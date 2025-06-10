@@ -52,6 +52,9 @@ suppressPackageStartupMessages(library(smacof, quietly = TRUE))
 ```{r loadsourses, echo = FALSE}
 source("smacofDataUtilities.R")
 source("smacofAuxiliaries.R")
+source("smacofTorgerson.R")
+source("smacofGuttman.R")
+source("smacofElegant.R")
 source("smacofPlots.R")
 source("smacofSS.R")
 source("smacofSSUR.R")
@@ -220,47 +223,62 @@ Each of the four R programs *smacofSSfoo()* can also be called directly, without
 
 \sectionbreak
 
-# Details
+# Details {#sec-details}
 
-## Interface C and R
+## Interface C and R  {#sec-interface}
 
 The C routines *smacofSSfooEngine()* by themselves are complete smacof MDS programs. It would be easy to write main programs in C that do the same job as the R frontend, and compile to stand-alone executables.
 
-The C code uses the *.C()* calling conventions and is otherwise not dependent on R in any way. It is important that the *.C()* call from R is only executed one time in a *smacofSS()* job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a *.C()* call to update the configuration and in the ordinal case an additional *.C()* call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to the *smacofSym()* in the *smacof* package on CRAN
+The C code uses the *.C()* calling conventions and is otherwise not dependent on R in any way. It is important to note that the *.C()* call from R is only executed one time in a *smacofSS()* job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a *.C()* call to update the configuration and in the ordinal case an additional *.C()* call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to the *smacofSym()* in the *smacof* package on CRAN
 (@deleeuw_mair_A_09c, @mair_groenen_deleeuw_A_22).
 
-## Monotone Regression
+## Monotone Regression {#sec-monotone}
 
 If *ordinal* is TRUE the monotone regression in each iteration uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()* algorithm is called in three separate C routines *primaryApproach()*, *secondaryApproach()*, and *tertiaryApproach()*, which in their turn are called in each iteration by the *smacofSSUOEngine()* or *smacofSSWOEngine()* C routines.
 
-## Initial Configuration
+## Initial Configuration {#sec-initial}
 
-In terms of strategy we suggest that in an MDS analysis the researcher first computes one of more
+There are some additional initial configuration routines included. We can generate random missing data with 
+*smacofRandomConfiguration()* which is mainly useful for theoretical studies of convergence and local minima. 
+
+In terms of strategy we suggest that in an MDS analysis the researcher first computes one or more
 initial configurations (which are all independent MDS solutions anyway, except for the random 
 configuration), and then give one or more of these initial configurations as the *xinit* argument
 to *smacofSS()*.
 
 sstress
 
-### Torgerson
+### Torgerson {#sec-torgerson}
 
 The default initial configuration is set to NULL for *smacofSS()*. This is mean to emphasize the 
 importance of choosing an initial configuration. But to make life easier for the user if
-*xinit* is null, then an initial configuration is computed by the *smacofTorgerson()* routine in *smacofAuxiliaries.R*. 
-*smacofTorgerson()* is classical MDS, with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24). 
+*xinit* is null, then an initial configuration is computed by the *smacofTorgerson()* routine in *smacofAuxiliaries.R*. *smacofTorgerson()* is classical MDS (@torgerson_58), with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24). 
 
-The Torgerson initial configuration works best for complete and unweighted data, but may also be satisfactory for a small number of randomly missing data and for weights that are not too unequal. Also remember that
+The Torgerson initial configuration works best for complete and unweighted data, but may also be satisfactory for a small number of randomly missing data and for weights that do not vary a great deal. Also remember that
 in the case of a really bad fit classical MDS may run into the problem of negative eigenvalues. 
 This will give the initial configuration a dimension less than $p$, and since smacof iterations
 never increase dimensionality this will mean the final configuration will also have dimension
-less than $p$. This makes the Torgerson initial configuration unsuitable, for example, for full-dimensional scaling (@deleeuw_groenen_mair_E_16e).
+less than $p$. Thus the Torgerson initial configuration is unsuitable, for example, for full-dimensional scaling (@deleeuw_groenen_mair_E_16e).
 
-### Guttman
+### Guttman {#sec-guttman}
 
-There are some additional initial configuration routines included. We can generate random missing data with 
-*smacofRandomConfiguration()* which is mainly useful for theoretical studies of convergence and local minima. The Guttman-Lingoes initial configuration (@guttman_68), which handles missing data and unequal weights, is provided as *smacofGuttman()*. It is closely related to Hayashi's Quantification Method IV (@takane_77) and does not have the negative eignevalue problem.
+The Guttman-Lingoes initial configuration (@guttman_68), which handles missing data and unequal weights, is provided as *smacofGuttman()*. It is closely related to Hayashi's Quantification Method IV (@takane_77) and unlike the Torgerson method does not have a negative eigenvalue problem.
 
-### Elegant
+Write sstress as
+$$
+\sigma(X)=K-2\sum_{k=1}^mw_k\delta_k^2d_k^2(X)+\sum_{k=1}^mw_kd_k^4(X).
+$$
+By homogeneity this is scale-equivalent to maximizing the middle term over all configurations
+for which the third term is one. The middle term is equal to $\text{tr}\ X'BX$, where
+.. Note that $B$ is positive semi-definite. The term 
+$\smash{\sum_{k=1}^mw_kd_k^4(X)}$ is a homogeneous quartic in $X$, or equivalently a homogeneous
+quadratic in the elements of $C=XX'$. In the *elegant* algorithm, discussed in @sec-elegant,
+we majorize the quadratic to arrive at a simpler unweighted quadratic in $C$. 
+In the Guttman initial configuration we maximize
+the middle term using the alternative quartic constraint $\text{tr}\ (X'X)^2=\text{tr}\ C^2=1$. The stationary equations are $BX=X(X'X)$ and thus the maximum is attained for $\smash{X=K\Lambda^\frac12}$, where $\Lambda$
+are the $p$ dominant eigenvalues of $B$ and $K$ are the corresponding eigenvalues.
+
+### Elegant {#sec-elegant}
 
 In addition there is *smacofElegant()*, which implements an optimized version of the algorithm of
 @deleeuw_U_75b, as described recently in @deleeuw_E_25c. *smacofElegant()* is a stand-alone iterative metric
