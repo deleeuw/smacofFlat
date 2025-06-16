@@ -7,10 +7,10 @@
 #define SQUARE(x) ((x) * (x))
 
 void smacofSSWREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
-                      int *digits, int *width, bool *verbose, double *wsum, double *sold,
-                      double *snew, double *eps, int *iind, int *jind,
-                      double *edis, double *dhat, double *wght, double *vinv,
-                      double *xold, double *xnew) {
+                      int *digits, int *width, bool *verbose, double *wsum,
+                      double *sold, double *snew, double *eps, int *iind,
+                      int *jind, double *edis, double *dhat, double *wght,
+                      double *vinv, double *xold, double *xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
     while (true) {
         double *xtmp = (double *)calloc(Nobj * Ndim, sizeof(double));
@@ -69,7 +69,7 @@ void smacofSSWREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
+        xold = memcpy(xold, xnew, (size_t)Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
     }

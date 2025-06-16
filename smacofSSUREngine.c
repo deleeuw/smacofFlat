@@ -50,7 +50,7 @@ void smacofSSUREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
         for (int k = 0; k < Ndat; k++) {
             *snew += SQUARE(dhat[k] - edis[k]);
         }
-        *snew /= ((double) Ndat);
+        *snew /= ((double)Ndat);
         if (*verbose) {
             printf("itel %4d sold %*.*f snew %*.*f\n", *itel, *width, *digits,
                    *sold, *width, *digits, *snew);
@@ -58,7 +58,7 @@ void smacofSSUREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
+        xold = memcpy(xold, xnew, (size_t)Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
     }

@@ -24,10 +24,11 @@ struct quintuple {
 };
 
 void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
-                      int *itmax, int *digits, int *width, bool *verbose, double *wsum,
-                      double *sold, double *snew, double *eps, int *iind,
-                      int *jind, int *blks, double *edis, double *dhat,
-                      double *wght, double *vinv, double *xold, double *xnew) {
+                      int *itmax, int *digits, int *width, bool *verbose,
+                      double *wsum, double *sold, double *snew, double *eps,
+                      int *iind, int *jind, int *blks, double *edis,
+                      double *dhat, double *wght, double *vinv, double *xold,
+                      double *xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
     while (true) {
         double *xtmp = (double *)calloc(Nobj * Ndim, sizeof(double));
@@ -107,7 +108,7 @@ void smacofSSWOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
+        xold = memcpy(xold, xnew, (size_t)Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
     }

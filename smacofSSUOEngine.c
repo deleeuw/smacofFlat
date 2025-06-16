@@ -68,7 +68,7 @@ void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         for (int k = 0; k < Ndat; k++) {
             smid += SQUARE(dhat[k] - edis[k]);
         }
-        smid /= (double) Ndat;
+        smid /= (double)Ndat;
         double *wght = (double *)calloc(Ndat, sizeof(double));
         for (int k = 0; k < Ndat; k++) {
             wght[k] = 1.0;
@@ -89,10 +89,10 @@ void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         }
         *snew = 0.0;
         for (int k = 0; k < Ndat; k++) {
-            dhat[k] *= sqrt(((double) Ndat) / ssq);
+            dhat[k] *= sqrt(((double)Ndat) / ssq);
             *snew += SQUARE(dhat[k] - edis[k]);
         }
-        *snew /= (double) Ndat;
+        *snew /= (double)Ndat;
         if (*verbose) {
             printf("itel %4d sold %*.*f smid %*.*f snew %*.*f\n", *itel, *width,
                    *digits, *sold, *width, *digits, smid, *width, *digits,
@@ -101,7 +101,7 @@ void smacofSSUOEngine(int *nobj, int *ndim, int *ndat, int *itel, int *ties,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        xold = memcpy(xold, xnew, (size_t) Nobj * Ndim * sizeof(double));
+        xold = memcpy(xold, xnew, (size_t)Nobj * Ndim * sizeof(double));
         *sold = *snew;
         *itel += 1;
         free(wght);

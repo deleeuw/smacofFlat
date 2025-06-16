@@ -13,6 +13,8 @@ smacofTorgerson <- function(theData, ndim = 2) {
     j <- theData$jind[k]
     dmat[i, j] <- dmat[j, i] <- dhat[k]
   }
+  wsum <- sum(wght)
+  dmat <- dmat * sqrt(wsum / sum(wght * dmat^2))
   dr <- apply(dmat, 1, mean)
   dm <- mean(dmat)
   bmat <- -(dmat - outer(dr, dr, "+") + dm) / 2
@@ -30,9 +32,9 @@ smacofTorgerson <- function(theData, ndim = 2) {
   lbd <- sde / sdd
   edis <- lbd * edis
   x <- lbd * x
-  sstress <- sum(wght * (dhat - edis)^2)
+  sstress <- sum(wght * (dhat - edis)^2) / wsum
   result <- list(
-    delta = theData$delta,
+    delta = theData$delta ^ 2,
     dhat = dhat,
     confdist = edis,
     conf = x,

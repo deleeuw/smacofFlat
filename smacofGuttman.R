@@ -32,7 +32,7 @@ smacofGuttman <- function(theData, ndim = 2) {
   x <- lbd * x
   sstress <- sum(wght * (dhat - edis)^2) / wsum
   result <- list(
-    delta = theData$delta,
+    delta = delta ^ 2,
     dhat = dhat,
     confdist = edis,
     conf = x,

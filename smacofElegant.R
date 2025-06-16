@@ -67,7 +67,7 @@ smacofElegant <- function(theData,
     cold <- cnew
   }
   result <- list(
-    delta = theData$delta,
+    delta = theData$delta ^ 2,
     dhat = dhat,
     confdist = dnew,
     conf = xvev,
