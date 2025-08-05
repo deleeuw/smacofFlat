@@ -14,7 +14,7 @@ smacofSSWO <- function(theData,
                        width = 15,
                        verbose = TRUE) {
   if (is.null(xinit)) {
-    xinit <- smacofTorgerson(theData, ndim)
+    xinit <- smacofTorgerson(theData, ndim)$conf
   }
   xold <- xinit
   nobj <- theData$nobj

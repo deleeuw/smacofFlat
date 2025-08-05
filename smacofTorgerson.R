@@ -8,13 +8,15 @@ smacofTorgerson <- function(theData, ndim = 2) {
   dhat <- (theData$delta)^2
   mdel <- mean(dhat)
   dmat <- mdel * (1 - diag(nobj))
+  wmat <- matrix(0, nobj, nobj)
   for (k in 1:ndat) {
     i <- theData$iind[k]
     j <- theData$jind[k]
     dmat[i, j] <- dmat[j, i] <- dhat[k]
+    wmat[i, j] <- wmat[j, i] <- wght[k]
   }
-  wsum <- sum(wght)
-  dmat <- dmat * sqrt(wsum / sum(wght * dmat^2))
+  wsum <- sum(wmat)
+  dmat <- dmat * sqrt(wsum / sum(wmat * dmat^2))
   dr <- apply(dmat, 1, mean)
   dm <- mean(dmat)
   bmat <- -(dmat - outer(dr, dr, "+") + dm) / 2
