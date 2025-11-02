@@ -1,10 +1,5 @@
-#include <math.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define SQUARE(x) ((x) * (x))
+#include "smacofSS.h"
+#include "smacofAlloc.h"
 
 void smacofSSUREngine(int *nobj, int *ndim, int *ndat, int *itel, int *itmax,
                       int *digits, int *width, bool *verbose, double *sold,
