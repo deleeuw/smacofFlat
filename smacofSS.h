@@ -10,16 +10,41 @@
 
 #define SQUARE(x) ((x) * (x))
 
-void primaryApproach(const size_t *, const size_t *, double *, double *,
-                     double *, size_t *, size_t *);
-void secondaryApproach(const size_t *, const size_t *, double *, double *);
-void tertiaryApproach(const size_t *, const size_t *, double *, double *);
-void tieBlockAverages(const size_t *, const size_t *, const size_t *,
+void primaryApproach(const int *, const int *, double *, double *,
+                     double *, int *, int *);
+void secondaryApproach(const int *, const int *, double *, double *);
+void tertiaryApproach(const int *, const int *, double *, double *);
+void tieBlockAverages(const int *, const int *, const int *,
                       const double *, const double *, double *, double *,
-                      size_t *, double *);
-void monotone(const size_t *, double *, double *);
+                      int *, double *);
+void monotone(const int *, double *, double *);
 int myComp(const void *, const void *);
-void mySort(double *, double *, double *, size_t *, size_t *, const size_t *);
+void mySort(double *, double *, double *, int *, int *, const int *);
+
+void smacofMPInverseV(int* ndat, int* nobj, int* iind, int* jind, double* wght,
+                      double* vinv);
+
+void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
+                    int* itmax, int* digits, int* width, bool* verbose,
+                    bool* ordinal, bool *weighted, double* sold, double* snew, double* eps,
+                    int* iind, int* jind, int* blks, double* wght, double* edis,
+                    double* dhat, double* xold, double* xnew);
+
+void smacofSSUEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
+                       int* itmax, int* digits, int* width, bool* verbose, bool *ordinal,
+                       double* sold, double* snew, double* eps, int* iind,
+                       int* jind, int* blks, double* edis, double* dhat,
+                       double* xold, double* xnew);
+void smacofSSUMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
+                       int* jind, double* edis, double* dhat, double* xold,
+                       double* xnew);
+void smacofSSWMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
+                       int* jind, double* wght, double* vinv, double* edis,
+                       double* dhat, double* xold, double* xnew);
+
+void smacofSSMonotone(int* ndat, int* ties, double* snew,
+                       int* iind, int* jind, int* blks, double* edis,
+                       double* dhat, double* wght);
 
 static inline void *xmalloc(const size_t size) {
   void *p = malloc(size);
@@ -31,7 +56,6 @@ static inline void *xmalloc(const size_t size) {
 }
 
 static inline void *xcalloc(const size_t nmemb, const size_t size) {
-  /* basic overflow guard */
   if (size && nmemb > SIZE_MAX / size) {
     fprintf(stderr, "FATAL: calloc overflow (%zu,%zu)\n", nmemb, size);
     abort();

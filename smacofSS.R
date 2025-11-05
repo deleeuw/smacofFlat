@@ -11,7 +11,7 @@ smacofSS <- function(theData,
                      eps = 1e-10,
                      digits = 10, 
                      width = 12,
-                     verbose = TRUE) {
+                     verbose = FALSE) {
   if (!weighted && !ordinal) {
     source("smacofSSUR.R")
     return(

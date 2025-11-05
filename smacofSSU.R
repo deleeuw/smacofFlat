@@ -1,18 +1,19 @@
-dyn.load("smacofSSUOEngine.so")
+dyn.load("smacofSSUEngine.so")
 
 source("smacofAuxiliaries.R")
 source("smacofDataUtilities.R")
 source("smacofPlots.R")
 
-smacofSSUO <- function(theData,
-                       ndim = 2,
-                       xinit = NULL,
-                       ties = 1,
-                       itmax = 1000,
-                       eps = 1e-10,
-                       digits = 10,
-                       width = 15,
-                       verbose = TRUE) {
+smacofSSU <- function(theData,
+                      ndim = 2,
+                      xinit = NULL,
+                      ties = 1,
+                      itmax = 1000,
+                      eps = 1e-10,
+                      digits = 10,
+                      width = 15,
+                      verbose = TRUE,
+                      ordinal = FALSE) {
   if (is.null(xinit)) {
     xinit <- smacofTorgerson(theData, 2)$conf
   }
@@ -41,7 +42,7 @@ smacofSSUO <- function(theData,
   xold <- as.vector(xold)
   xnew <- rep(0, nobj * ndim)
   h <- .C(
-    "smacofSSUOEngine2",
+    "smacofSSUEngine",
     nobj = as.integer(nobj),
     ndim = as.integer(ndim),
     ndat = as.integer(ndat),
@@ -51,6 +52,7 @@ smacofSSUO <- function(theData,
     digits = as.integer(digits),
     width = as.integer(width),
     verbose = as.integer(verbose),
+    ordinal = as.integer(ordinal),
     sold = as.double(sold),
     snew = as.double(snew),
     eps = as.double(eps),

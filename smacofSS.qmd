@@ -411,7 +411,8 @@ In this section we compare the output (final stress, number of iterations) of sm
 
 ```{r somedataE, echo = FALSE}
 source("smacofSSData/ekmanData.R")
-xinit <- smacofTorgerson(ekmanData, 2)
+xinit <- smacofTorgerson(ekmanData, 2)$conf
+print(xinit)
 ```
 
 ```{r compURE, cache = TRUE, echo = FALSE}
@@ -481,7 +482,7 @@ kable(x, format = "simple", align = NULL, row.names = TRUE, caption = "Compariso
 
 ```{r somedata, echo = FALSE}
 source("smacofSSData/morseData.R")
-xinit <- smacofTorgerson(morseData, 2)
+xinit <- smacofTorgerson(morseData, 2)$conf
 ```
 
 ```{r compUR, cache = TRUE, echo = FALSE}
@@ -777,7 +778,7 @@ The Morse example has a bad numerical fit, and the improvements by the oidinal o
 
 ```{r ekmanall, echo = FALSE, cache = TRUE}
 source("smacofSSData/ekmanData.R")
-xinit <- smacofTorgerson(ekmanData, 2)
+xinit <- smacofTorgerson(ekmanData, 2)$conf
 hUR <- smacofSS(ekmanData, xinit = xinit, verbose = FALSE)
 hUO1 <- smacofSS(ekmanData, xinit = xinit, ordinal = 1, verbose = FALSE)
 hUO2 <- smacofSS(ekmanData, xinit = xinit, ordinal = 2, verbose = FALSE)
@@ -804,7 +805,7 @@ smacofDistDhatPlot(hUO3,  main = "DistDhat Plot, Ekman Data, Unweighted, Ordinal
 
 ```{r morseall, echo = FALSE, cache = TRUE}
 source("smacofSSData/morseData.R")
-xinit <- smacofTorgerson(morseData, 2)
+xinit <- smacofTorgerson(morseData, 2)$conf
 hUR <- smacofSS(morseData, xinit = xinit, verbose = FALSE)
 hUO1 <- smacofSS(morseData, xinit = xinit, ordinal = 1, verbose = FALSE)
 hUO2 <- smacofSS(morseData, xinit = xinit, ordinal = 2, verbose = FALSE)
@@ -832,7 +833,7 @@ smacofDistDhatPlot(hUO3, fitlines = FALSE, main = "DistDhat Plot, Morse Data, Un
 
 ```{r irisdata, cache = TRUE}
 source("smacofSSData/irisData.R")
-xinit <- smacofTorgerson(irisData, 2)
+xinit <- smacofTorgerson(irisData, 2)$conf
 h1 <- smacofSym(irisDist, ndim = 2, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
 h2 <- smacofSS(irisData, xinit = xinit, verbose = FALSE)
 print(h1$stress)
