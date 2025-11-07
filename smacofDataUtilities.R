@@ -51,7 +51,7 @@ fromMDSData <- function(theData) {
     i <- theData$iind[k]
     j <- theData$jind[k]
     delta[i, j] <- delta[j, i] <- theData$delta[k]
-    weights[i, j] <- weights[j, i] <- theData$weights[k]
+    weights[i, j] <- weights[j, i] <- theData$weights[kdelta]
   }
   return(list(delta = as.dist(delta), weights = as.dist(weights)))
 }

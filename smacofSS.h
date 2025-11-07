@@ -21,7 +21,7 @@ void monotone(const int *, double *, double *);
 int myComp(const void *, const void *);
 void mySort(double *, double *, double *, int *, int *, const int *);
 
-void smacofMPInverseV(int* ndat, int* nobj, int* iind, int* jind, double* wght,
+void smacofMPInverseV(int* nobj, int* ndat, int* iind, int* jind, double* wght,
                       double* vinv);
 
 void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
@@ -30,17 +30,9 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
                     int* iind, int* jind, int* blks, double* wght, double* edis,
                     double* dhat, double* xold, double* xnew);
 
-void smacofSSUEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
-                       int* itmax, int* digits, int* width, bool* verbose, bool *ordinal,
-                       double* sold, double* snew, double* eps, int* iind,
-                       int* jind, int* blks, double* edis, double* dhat,
-                       double* xold, double* xnew);
-void smacofSSUMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
-                       int* jind, double* edis, double* dhat, double* xold,
-                       double* xnew);
-void smacofSSWMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
-                       int* jind, double* wght, double* vinv, double* edis,
-                       double* dhat, double* xold, double* xnew);
+void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
+                      int* jind, bool* weighted, double* wght, double* vinv, double* edis,
+                      double* dhat, double* xold, double* xnew);
 
 void smacofSSMonotone(int* ndat, int* ties, double* snew,
                        int* iind, int* jind, int* blks, double* edis,

@@ -1,78 +1,90 @@
+dyn.load("smacofSSEngine.so")
+
 source("smacofAuxiliaries.R")
 source("smacofDataUtilities.R")
 source("smacofPlots.R")
+source("smacofTorgerson.R")
 
 smacofSS <- function(theData,
                      ndim = 2,
                      xinit = NULL,
-                     weighted = FALSE,
-                     ordinal = FALSE,
+                     ties = 1,
                      itmax = 1000,
                      eps = 1e-10,
-                     digits = 10, 
-                     width = 12,
-                     verbose = FALSE) {
-  if (!weighted && !ordinal) {
-    source("smacofSSUR.R")
-    return(
-      smacofSSUR(
-        theData = theData,
-        ndim = ndim,
-        xinit = xinit,
-        itmax = itmax,
-        eps = eps,
-        digits = digits, 
-        width = width,
-        verbose = verbose
-      )
-    )
+                     digits = 10,
+                     width = 15,
+                     verbose = TRUE,
+                     weighted = FALSE,
+                     ordinal = FALSE) {
+  if (is.null(xinit)) {
+    xinit <- smacofTorgerson(theData, 2)$conf
   }
-  if (weighted && !ordinal) {
-    source("smacofSSWR.R")
-    return(
-      smacofSSWR(
-        theData = theData,
-        ndim = ndim,
-        xinit = xinit,
-        itmax = itmax,
-        eps = eps,
-        digits = digits, 
-        width = width,
-        verbose = verbose
-      )
-    )
+  xold <- xinit
+  nobj <- theData$nobj
+  ndat <- theData$ndat
+  itel <- 1
+  iind <- theData$iind
+  jind <- theData$jind
+  dhat <- theData$delta
+  wght <- theData$weights
+  blks <- theData$blocks
+  edis <- rep(0, ndat)
+  for (k in 1:ndat) {
+    i <- iind[k]
+    j <- jind[k]
+    edis[k] <- sqrt(sum((xold[i, ] - xold[j, ])^2))
   }
-  if (!weighted && ordinal) {
-    source("smacofSSUO.R")
-    return(
-      smacofSSUO(
-        theData = theData,
-        ndim = ndim,
-        xinit = xinit,
-        ties = ordinal,
-        itmax = itmax,
-        eps = eps,
-        digits = digits, 
-        width = width,
-        verbose = verbose
-      )
-    )
-  }
-  if (weighted && ordinal) {
-    source("smacofSSWO.R")
-    return(
-      smacofSSWO(
-        theData = theData,
-        ndim = ndim,
-        xinit = xinit,
-        ties = ordinal,
-        itmax = itmax,
-        eps = eps,
-        digits = digits, 
-        width = width,
-        verbose = verbose
-      )
-    )
-  }
+  dhat <- dhat * sqrt(ndat / sum(dhat^2))
+  sdd <- sum(edis^2)
+  sde <- sum(dhat * edis)
+  lbd <- sde / sdd
+  edis <- lbd * edis
+  xold <- lbd * xold
+  sold <- sum((dhat - edis)^2) / ndat
+  snew <- 0.0
+  xold <- as.vector(xold)
+  xnew <- rep(0, nobj * ndim)
+  h <- .C(
+    "smacofSSEngine",
+    nobj = as.integer(nobj),
+    ndim = as.integer(ndim),
+    ndat = as.integer(ndat),
+    itel = as.integer(itel),
+    ties = as.integer(ties),
+    itmax = as.integer(itmax),
+    digits = as.integer(digits),
+    width = as.integer(width),
+    verbose = as.integer(verbose),
+    ordinal = as.integer(ordinal),
+    weighted = as.integer(weighted),
+    sold = as.double(sold),
+    snew = as.double(snew),
+    eps = as.double(eps),
+    iind = as.integer(iind - 1),
+    jind = as.integer(jind - 1),
+    wght = as.double(wght),
+    blks = as.integer(blks),
+    edis = as.double(edis),
+    dhat = as.double(dhat),
+    xold = as.double(xold),
+    xnew = as.double(xnew)
+  )
+  result <- list(
+    delta = theData$delta,
+    dhat = h$dhat,
+    confdist = h$edis,
+    conf = matrix(h$xnew, nobj, ndim),
+    weightmat = theData$weights,
+    stress = h$snew,
+    ndim = ndim,
+    init = xinit,
+    niter = h$itel,
+    nobj = nobj,
+    iind = h$iind,
+    jind = h$jind,
+    weighted = FALSE,
+    ordinal = TRUE
+  )
+  class(result) <- c("smacofSSResult", "smacofSSUOResult")
+  return(result)
 }
-
