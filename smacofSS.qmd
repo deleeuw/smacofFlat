@@ -853,25 +853,6 @@ print(h2$niter)
 ```{r code1, code = readLines("smacofSS.R"), eval = FALSE}
 ```
 
-### smacofSSUR.R
-
-```{r code2, code = readLines("smacofSSUR.R"), eval = FALSE}
-```
-
-### smacofSSWR.R
-
-```{r code3, code = readLines("smacofSSWR.R"), eval = FALSE}
-```
-
-### smacofSSUO.R
-
-```{r code4, code = readLines("smacofSSUO.R"), eval = FALSE}
-```
-
-### smacofSSWO.R
-
-```{r code5, code = readLines("smacofSSWO.R"), eval = FALSE}
-```
 
 ### smacofAuxiliaries.R
 
@@ -890,6 +871,8 @@ print(h2$niter)
 
 ### smacofElegant.R
 
+### smacofElegant.R
+
 ```{r code9, code = readLines("smacofElegant.R"), eval = FALSE}
 ```
 
@@ -900,9 +883,9 @@ print(h2$niter)
 ```{c code10, code = readLines("smacofSSUREngine.c"), eval = FALSE}
 ```
 
-## smacofSSWREngine.c
+## smacofSSEngine.c
 
-```{c code11, code = readLines("smacofSSWREngine.c"), eval = FALSE}
+```{c code11, code = readLines("smacofSSEngine.c"), eval = FALSE}
 ```
 
 ## smacofSSUOEngine.c
