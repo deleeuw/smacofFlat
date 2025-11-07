@@ -1,8 +1,8 @@
 #include "smacofSS.h"
 
 void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
-                    int* itmax, int* digits, int* width, bool* verbose,
-                    bool* ordinal, bool* weighted, double* sold, double* snew,
+                    int* itmax, int* digits, int* width, int* verbose,
+                    int* ordinal, int* weighted, double* sold, double* snew,
                     double* eps, int* iind, int* jind, int* blks, double* wght,
                     double* edis, double* dhat, double* xold, double* xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
@@ -13,7 +13,9 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
                                wght, vinv, edis, dhat, xold, xnew);
         double smid = *snew;
         if (*ordinal) {
-            dhat = memcpy(dhat, edis, Ndat * sizeof(double));
+            for (int k = 0; k < Ndat; k++) {
+              dhat[k] = edis[k];
+            }
             (void)smacofSSMonotone(ndat, ties, snew, iind, jind, blks, edis,
                                    dhat, wght);
         }
@@ -30,8 +32,11 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
         if ((*itel == *itmax) || ((*sold - *snew) < *eps)) {
             break;
         }
-        xold = memcpy(xold, xnew, Nobj * Ndim * sizeof(double));
+        for (int k = 0; k < Nobj * Ndim; k++) {
+          xold[k] = xnew[k];
+        }
         *sold = *snew;
         *itel += 1;
     }
+    xfree(vinv);
 }

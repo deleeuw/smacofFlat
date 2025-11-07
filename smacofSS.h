@@ -3,12 +3,14 @@
 
 #include <limits.h>
 #include <math.h>
-#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define SQUARE(x) ((x) * (x))
+#define true 1
+#define false 0
 
 void primaryApproach(const int *, const int *, double *, double *,
                      double *, int *, int *);
@@ -25,13 +27,13 @@ void smacofMPInverseV(int* nobj, int* ndat, int* iind, int* jind, double* wght,
                       double* vinv);
 
 void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
-                    int* itmax, int* digits, int* width, bool* verbose,
-                    bool* ordinal, bool *weighted, double* sold, double* snew, double* eps,
+                    int* itmax, int* digits, int* width, int* verbose,
+                    int* ordinal, int *weighted, double* sold, double* snew, double* eps,
                     int* iind, int* jind, int* blks, double* wght, double* edis,
                     double* dhat, double* xold, double* xnew);
 
 void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
-                      int* jind, bool* weighted, double* wght, double* vinv, double* edis,
+                      int* jind, int* weighted, double* wght, double* vinv, double* edis,
                       double* dhat, double* xold, double* xnew);
 
 void smacofSSMonotone(int* ndat, int* ties, double* snew,

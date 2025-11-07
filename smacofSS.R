@@ -1,4 +1,4 @@
-dyn.load("smacofSSEngine.so")
+dyn.load("smacofSS.so")
 
 source("smacofAuxiliaries.R")
 source("smacofDataUtilities.R")
@@ -9,13 +9,13 @@ smacofSS <- function(theData,
                      ndim = 2,
                      xinit = NULL,
                      ties = 1,
-                     itmax = 1000,
+                     itmax = 100,
                      eps = 1e-10,
                      digits = 10,
                      width = 15,
-                     verbose = TRUE,
-                     weighted = FALSE,
-                     ordinal = FALSE) {
+                     verbose = 1,
+                     weighted = 1,
+                     ordinal = 1) {
   if (is.null(xinit)) {
     xinit <- smacofTorgerson(theData, 2)$conf
   }
@@ -43,7 +43,7 @@ smacofSS <- function(theData,
   sold <- sum((dhat - edis)^2) / ndat
   snew <- 0.0
   xold <- as.vector(xold)
-  xnew <- rep(0, nobj * ndim)
+  xnew <- xold
   h <- .C(
     "smacofSSEngine",
     nobj = as.integer(nobj),
@@ -62,8 +62,8 @@ smacofSS <- function(theData,
     eps = as.double(eps),
     iind = as.integer(iind - 1),
     jind = as.integer(jind - 1),
-    wght = as.double(wght),
     blks = as.integer(blks),
+    wght = as.double(wght),
     edis = as.double(edis),
     dhat = as.double(dhat),
     xold = as.double(xold),
@@ -82,8 +82,8 @@ smacofSS <- function(theData,
     nobj = nobj,
     iind = h$iind,
     jind = h$jind,
-    weighted = FALSE,
-    ordinal = TRUE
+    weighted = weighted,
+    ordinal = ordinal
   )
   class(result) <- c("smacofSSResult", "smacofSSUOResult")
   return(result)

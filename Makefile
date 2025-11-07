@@ -4,15 +4,9 @@ SRC = smacofIsotone.c smacofMPInverseV.c smacofSort.c smacofSSEngine.c smacofSSM
 %.o: %.c smacofSS.h
 	clang -c $@
 
-shlib: $(SRC)
+shlib: smacofSS.h $(SRC)
 	R CMD SHLIB -o smacofSS.so $(SRC)
 
-walker: walker.c $(SRC)
-	clang -o walker walker.c $(SRC)
-
-runner: runner.c $(SRC)
-	clang -o runner runner.c $(SRC)
-
 clean:
-	rm -f runner walker *.o *.so
+	rm -f *.o *.so
 
