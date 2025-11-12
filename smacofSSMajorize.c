@@ -8,10 +8,6 @@ void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
     for (int k = 0; k < Nobj * Ndim; k++) {
         xtmp[k] = 0.0;
     }
-    double wsum = 0.0;
-    for (int k = 0; k < Ndat; k++) {
-        wsum += wght[k];
-    }
     for (int k = 0; k < Ndat; k++) {
         if (edis[k] == 0.0) {
             continue;
@@ -73,6 +69,6 @@ void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
     for (int k = 0; k < Ndat; k++) {
         sum += wght[k] * SQUARE(dhat[k] - edis[k]);
     }
-    *snew = sum / wsum;
+    *snew = sum / Ndat;
     return;
 }

@@ -9,6 +9,7 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
     double* vinv = xmalloc(Nobj * (Nobj - 1) * sizeof(double) / 2);
     (void)smacofMPInverseV(nobj, ndat, iind, jind, wght, vinv);
     while (true) {
+        
         (void)smacofSSMajorize(nobj, ndim, ndat, snew, iind, jind, weighted,
                                wght, vinv, edis, dhat, xold, xnew);
         double smid = *snew;

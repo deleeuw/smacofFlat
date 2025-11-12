@@ -14,12 +14,12 @@ void smacofSSMonotone(int* ndat, int* ties, double* snew, int* iind, int* jind,
     }
     double ssq = 0.0;
     for (int k = 0; k < Ndat; k++) {
-        ssq += SQUARE(dhat[k]);
+        ssq += wght[k] * SQUARE(dhat[k]);
     }
     *snew = 0.0;
     for (int k = 0; k < Ndat; k++) {
         dhat[k] *= sqrt(((double)Ndat) / ssq);
-        *snew += SQUARE(dhat[k] - edis[k]);
+        *snew += wght[k] * SQUARE(dhat[k] - edis[k]);
     }
-    *snew /= (double)Ndat;
+    *snew /= Ndat;
 }

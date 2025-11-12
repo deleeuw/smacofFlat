@@ -9,13 +9,13 @@ smacofSS <- function(theData,
                      ndim = 2,
                      xinit = NULL,
                      ties = 1,
-                     itmax = 100,
+                     itmax = 1000,
                      eps = 1e-10,
                      digits = 10,
                      width = 15,
-                     verbose = 1,
-                     weighted = 1,
-                     ordinal = 1) {
+                     verbose = TRUE,
+                     weighted = FALSE,
+                     ordinal = FALSE) {
   if (is.null(xinit)) {
     xinit <- smacofTorgerson(theData, 2)$conf
   }
@@ -27,6 +27,9 @@ smacofSS <- function(theData,
   jind <- theData$jind
   dhat <- theData$delta
   wght <- theData$weights
+  if (!weighted) {
+    wght <- rep(1, ndat)
+  }
   blks <- theData$blocks
   edis <- rep(0, ndat)
   for (k in 1:ndat) {
@@ -34,13 +37,13 @@ smacofSS <- function(theData,
     j <- jind[k]
     edis[k] <- sqrt(sum((xold[i, ] - xold[j, ])^2))
   }
-  dhat <- dhat * sqrt(ndat / sum(dhat^2))
-  sdd <- sum(edis^2)
-  sde <- sum(dhat * edis)
+  dhat <- dhat * sqrt(ndat / sum(wght * dhat^2))
+  sdd <- sum(wght * edis^2)
+  sde <- sum(wght * dhat * edis)
   lbd <- sde / sdd
   edis <- lbd * edis
   xold <- lbd * xold
-  sold <- sum((dhat - edis)^2) / ndat
+  sold <- sum(wght * (dhat - edis)^2) / ndat
   snew <- 0.0
   xold <- as.vector(xold)
   xnew <- xold
@@ -74,7 +77,7 @@ smacofSS <- function(theData,
     dhat = h$dhat,
     confdist = h$edis,
     conf = matrix(h$xnew, nobj, ndim),
-    weightmat = theData$weights,
+    weightmat = h$wght,
     stress = h$snew,
     ndim = ndim,
     init = xinit,
