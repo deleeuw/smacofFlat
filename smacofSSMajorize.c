@@ -65,10 +65,5 @@ void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
         }
         edis[k] = sqrt(sum);
     }
-    double sum = 0.0;
-    for (int k = 0; k < Ndat; k++) {
-        sum += wght[k] * SQUARE(dhat[k] - edis[k]);
-    }
-    *snew = sum / Ndat;
     return;
 }
