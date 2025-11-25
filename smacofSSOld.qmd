@@ -39,7 +39,7 @@ papersize: letter
 graphics: true
 link-citations: true
 mainfont: Times New Roman
-abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for square symmetric data as one monolithic C program. R is used for taking care of the data and parameter setup, the I/O, and of issuing a single call to *.C()* to start the computations. This makes this new *smacofSS()* program five to fifty times as fast (for our examples) as the *smacofSym()* function from the R smacof package. Utilities for various initial configurations and plots are included in the package. Examples are included to compare output and time for the R and C versions and to illustrate the various plots.
+abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for square symmetric data as four monolithic C programs, with R used for taking care of the setup, the I/O, and of issuing a single call to *.C()* to start the computations. This makes this new *smacofSS()* program five to fifty times as fast (for our examples) as the *smacofSym()* function from the R smacof package. Utilities for various initial configurations and plots are included in the package.
 ---
 
 ```{r loadpackages, echo = FALSE}
@@ -57,6 +57,10 @@ source("smacofGuttman.R")
 source("smacofElegant.R")
 source("smacofPlots.R")
 source("smacofSS.R")
+source("smacofSSUR.R")
+source("smacofSSWR.R")
+source("smacofSSUO.R")
+source("smacofSSWO.R")
 source("smacofSSData/ekmanData.R")
 source("smacofSSData/gruijterData.R")
 source("smacofSSData/morseData.R")
@@ -67,7 +71,7 @@ source("smacofSSData/wishData.R")
 options(warn = -1)
 ```
 
-**Note:** This is a working manuscript which may be expanded/updated frequently. All suggestions for improvement are welcome. All Rmd, tex, html, pdf, R, and C files are in the public domain. Attribution will be appreciated, but is not required. All files can be found at <https://github.com/deleeuw/smacofFlat>
+**Note:** This is a working manuscript which will be expanded/updated frequently. All suggestions for improvement are welcome. All Rmd, tex, html, pdf, R, and C files are in the public domain. Attribution will be appreciated, but is not required. The files can be found at <https://github.com/deleeuw/smacofFlat>
 
 \sectionbreak
 
@@ -75,11 +79,13 @@ options(warn = -1)
 
 In Multidimensional Scaling (MDS) we start with $n$ *objects*. Objects can be anything: people, animals, molecules, locations, time points, stimuli, political parties, and so on. We have information about the *similarities* or *dissimilarities* of some or all of the $\binom{n}{2}$ pairs of objects. Say we have information about $m$ dissimilarities $\delta_k$, with $k=1,\cdots m$. Thus each index $k$ refers to a pair of indices $(i,j)$, with $1\leq i\leq n$ and $1\leq j\leq n$. The information is of the form $\delta\in\Delta$, where $\Delta$ is a known subset of the non-negative orthant of $\mathbb{R}^m$. If the dissimilarities are known numbers and $\Delta$ has only a single element the MDS problem is *metric*, in all other cases the problem is *non-metric*.
 
-In MDS we want to map the objects into *points* in $p$-dimensional Euclidean space in such a way that the distances $d_k$ between the points approximate the dissimilarities $\delta_k$.\
-The quality of the approximation is given by the least squares loss function\footnote{The symbol $:=$ is used for definitions.} \begin{equation}
+In MDS we want to map the objects into *points* in $p$-dimensional Euclidean space in such a way that the distances $d_k$ between the points approximate the dissimilarities $\delta_k$. \
+The quality of the approximation is given by the least squares loss function\footnote{The symbol $:=$ is used for definitions.} 
+\begin{equation}
 \sigma(X,\Delta):=\frac{\sum_{k=1}^mw_k(\delta_k-d_k(X))^2}{\sum_{k=1}^mw_k\delta_k^2},
 \label{eq-stressdef}
-\end{equation} Traditionally, this loss function is called *stress* (@kruskal_64a, @kruskal_64b).
+\end{equation} 
+Traditionally, this loss function is called *stress* (@kruskal_64a, @kruskal_64b).
 
 In definition \eqref{eq-stressdef}
 
@@ -94,7 +100,8 @@ The (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional
 
 # MDS Data Structure
 
-Data management and algorithm initialization is handled by R (@r_core_team_25). We start with an R object of class *dist* containing dissimilarities. Here is a small example of order four.
+Data management and algorithm initialization is handled by R (@r_core_team_25).
+We start with an R object of class *dist* containing dissimilarities. Here is a small example of order four.
 
 ```{r small, echo = FALSE}
 small <- as.dist(matrix(
@@ -109,7 +116,11 @@ smallData <- makeMDSData(small)
 print(smallData)
 ```
 
-Note that the data in column *delta* are increasing, and that *blocks* are *tie-blocks*, i.e. they indicate how many elements are equal to the first element of the block. Also, the *weights* are always there in some form or another, even for MDS analyses that are *unweighted* (i.e. when all $w_k$ are equal). An object of class *smacofSSData* is *complete* if all $\binom{n}{2}$ dissimilarities are present. *makeMDSData()* can handle missing data and nontrivial weights. If our example is
+Note that the data in column *delta* are increasing, and that *blocks* has tie blocks. Also, the *weights* are always there in some form or another, even for MDS analyses that are unweighted (i.e. when all $w_k$ are equal).
+
+An object of class *smacofSSData* is *complete* if all $\binom{n}{2}$ dissimilarities are present and
+*unweighted* if all $w_k$ are equal to one. Note the *weights* are always part of the *smacofSSData* object, even for MDS analyses that are unweighted.
+*makeMDSData()* can handle missing data and nontrivial weights. If our example is
 
 ```{r smallmis, echo = FALSE}
 smallMissing <- small
@@ -131,7 +142,8 @@ smallData <- makeMDSData(smallMissing, smallWeights)
 print(smallData)
 ```
 
-In the dist objects *delta* and *weights* the missing data are coded as zero weights, or as dissimilarities and/or weights that are *NA*. Zero dissimilarities do not indicate missing data. Thus weights are always strictly positive and missing data do not enter into the data object at all.
+In the dist objects *delta* and *weights* the missing data are coded as zero weights, or as dissimilarities and/or weights that are *NA*. Zero dissimilarities do not indicate missing data. Thus weights are always
+strictly positive and missing data do not enter into the data object at all.
 
 These conventions make it possible to also handle rectangular off-diagonal data, such as this *delta* and *weights*.
 
@@ -154,39 +166,15 @@ rectData <- makeMDSData(rect, weights)
 print(rectData)
 ```
 
-Note however that handling rectangular data with square symmetric MDS is inefficient, and it is better to use smacof programs specifically designed for rectangular data.
+Notehowever that handling rectangular data with square symmetric MDS is inefficient, and it is better to use  smacof programs specifically intended for rectangular data.
 
-It is of course also possible to construct *smacofSSData* objects in other ways, and to edit the objects generated by *makeMDSData()*, for instance by deleting/adding observations or transforming weights/dissimilarities. As long as the conventions are obeyed that no index pair $(i,j)$ occurs more than once, that the dissimilarities remain sorted, and that the tie-blocks faithfully reflect ties in the sorted dissimilarities. We do need $i\neq j$, but it is not necessary that always $i>j$.
-
-\sectionbreak
-
-# Arguments
-
-The smacofSS() function has the following arguments, with default values,
-
-1.  *theData*, a *smacofSSData* object.\
-2.  *ndim=2*, dimensionality of MDS analysis.
-3.  *xinit=NULL*, initial configuration, NULL or an *nobj* by *ndim* matrix.
-4.  *ties=1*, ties approach, 1, 2, or 3 for primary, secondary, tertiary.
-4.  *weighted = FALSE*, TRUE/FALSE for weighted/unweighted least squares.
-5.  *ordinal = FALSE*, FALSE for numerical,TRUE for ordinal.
-6.  *itmax = 1000*, maximum number of iterations.
-7.  *eps = 1e-10*, if stress changes less than *eps*, stop.
-8.  *digits = 10*, digits stress print if verbose is TRUE,
-9.  *width = 12*, width stress print if verbose is TRUE,
-10. *verbose = FALSE*, TRUE/FALSE print stress for each iteration to *stdout*.
-
-The default initial configuration is the classical scaling solution, with missing data imputed as average non-missing dissimilarities.
-
-*smacofSS()* is an R front end that reads the parameters of the problem and then loads a shared library, called *smacofSSEngine.so*, which contains the compiled code of the C routine *smacofSSEngine()*. The github repository
-has the and R and C code, and a small Makefile for the shared library.
+It is of course also possible to *smacofSSData* objects in other ways, and to edit the objects generated by *makeMDSData()*, for instance by deleting/adding observations or transforming weights/dissimilarities. As long as the conventions are obeyed that no index pair $(i,j)$ occurs more than once, that the dissimilarities remain sorted, and that the tie blocks faithfully reflect ties in the sorted dissimilarities. We do need $i\neq j$, but it is not necessary that always $i>j$.
 
 \sectionbreak
-
 
 # Value
 
-The list of objects returned by *smacofSS()* mimics, as much as possible, the list returned by *smacofSym()* in the smacof package.
+The list of objects returned by *smacofSS()* mimics, as much as possible, the list returned by *smacofSym()*.
 
 1.  *delta*, dissimilarities, vector of length $m$.
 2.  *dhat*, final pseudo-distances, vector of length $m$.
@@ -207,55 +195,120 @@ One important special case should be kept in mind. In the ordinal case with the 
 
 \sectionbreak
 
+# Arguments
+
+The smacofSS() function has the following arguments, with default values,
+
+1.  *theData*, a *smacofSSData* object.\
+2.  *ndim=2*, dimensionality of MDS analysis.
+3.  *xinit=NULL*, initial configuration, NULL or an *nobj* by *ndim* matrix.
+4.  *weighted = FALSE*, TRUE/FALSE for weighted/unweighted least squares.
+5.  *ordinal = FALSE*, FALSE or 0 for numerical, 1,2,3 for ordinal.
+6.  *itmax = 1000*, maximum number of iterations.
+7.  *eps = 1e-10*, if stress changes less than *eps*, stop.
+8.  *digits = 10*, digits stress print if verbose is TRUE,
+9.  *width = 12*, width stress print if verbose is TRUE,
+10. *verbose = FALSE*, TRUE/FALSE print stress for each iteration to *stdout*.
+
+In *ordinal* we use 1 for the primary approach to ties, 2 for the secondary approach, and 3 for the tertiary approach (@deleeuw_A_77). The default initial configuration is the classical scaling solution, with missing data imputed as average non-missing dissimilarities.
+
+*smacofSS()* is a front end that reads the parameters of the problem and then calls one of four separate R programs. They are
+
+1.  *smacofSSUR()*, unweighted numerical;
+2.  *smacofSSWR()*, weighted numerical;
+3.  *smacofSSUO()*, unweighted ordinal;
+4.  *smacofSSWO()*, weighted ordinal.
+
+Although using four separate programs involves duplicating some code it does allow us to make the programs smaller and faster. For example, we are not have to do weighted updates with unit weights in the unweighted case, and we don't have to branch intoma different part of the code each time for either ordinal and numerical.
+
+In what follows "foo" can be "UR", "WR", "UO", or "WO". Each of the four R programs *smacofSSfoo()* calls a corresponding shared library, called *smacofSSfooEngine.so*, which contains the compiled code of the C routine *smacofSSfooEngine()*.
+
+Each of the four R programs *smacofSSfoo()* can also be called directly, without using the *smacofSS()* frontend. Their arguments and defualts are the same as for *smacofSS()*, except that *weighted* and *ordinal* are not there, while *smacofSSUO()* and *smacofSSWO()* have the additional argument *ties*, equal to 1 (default), 2, or 3.
+
+\sectionbreak
 
 # Details {#sec-details}
 
-## Interface C and R {#sec-interface}
+## Interface C and R  {#sec-interface}
 
-The C routine *smacofSSEngine()* by itself is a complete smacof MDS programs. It would be easy to write a main program in C that do the same job as the R frontend, and compile to a stand-alone executable.
+The C routines *smacofSSfooEngine()* by themselves are complete smacof MDS programs. It would be easy to write main programs in C that do the same job as the R frontend, and compile to stand-alone executables.
 
-The C code uses the *.C()* calling conventions and is otherwise not dependent on R in any way. It is important to note that the *.C()* call from R is only executed one time in a *smacofSS* job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a *.C()* call to update the configuration and in the ordinal case an additional *.C()* call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to the *smacofSym()* in the *smacof* package on CRAN (@deleeuw_mair_A_09c, @mair_groenen_deleeuw_A_22).
+The C code uses the *.C()* calling conventions and is otherwise not dependent on R in any way. It is important to note that the *.C()* call from R is only executed one time in a *smacofSS()* job, when loading the shared library, and after that there is only compiled code running until the end of the job. In other words, everything done in R is either front-end or back-end, and is only done once. Earlier versions of the R/C program had R also managing the iterations. In each iteration there was a *.C()* call to update the configuration and in the ordinal case an additional *.C()* call to update the pseudo-distances. This turned out to be unsatisfactory, because it did not give enough speedup compared to the *smacofSym()* in the *smacof* package on CRAN
+(@deleeuw_mair_A_09c, @mair_groenen_deleeuw_A_22).
 
 ## Monotone Regression {#sec-monotone}
 
-If *ordinal* is TRUE the monotone regression in each iteration uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()* algorithm is called in three separate C routines *primaryApproach()*, *secondaryApproach()*, and *tertiaryApproach()*, which in their turn are called in each iteration by the *smacofSSEngine()* C routine.
+If *ordinal* is TRUE the monotone regression in each iteration uses the C version of the *monotone()* algorithm of @busing_22. The *monotone()* algorithm is called in three separate C routines *primaryApproach()*, *secondaryApproach()*, and *tertiaryApproach()*, which in their turn are called in each iteration by the *smacofSSUOEngine()* or *smacofSSWOEngine()* C routines.
 
 ## Initial Configuration {#sec-initial}
 
-There are three initial configuration routines included in the files *smacofTorgerson.R*, *smacofGuttman.R*, and *smacofElegant.R*. We can also generate a random initial configuration with *smacofRandomConfiguration()* in *smacofAuxiliaries.R*. Random configurations are not really useful for data analysis, but can be used in theoretical studies of convergence and local minima.
+There are three initial configuration routines included in the files *smacofTorgerson.R*, *smacofGuttman.R*, and *smacofElegant.R*.  We can also generate a random initial configuration with 
+*smacofRandomConfiguration()* in *smacofAuxiliaries.R*. Random configurations are not really useful for data analysis, but can be used in theoretical studies of convergence and local minima.
 
-Each of the three routines is actually a fairly complete metric MDS program that takes a *smacofSSData* object as its argument and returns a value similar in structure to the *smacofSSResult* object returned by *smacofSS()*. Thus the returned object can be used directly the plotting routines of @sec-plotting.
+Each of the three routines is actually a fairly complete metric MDS program that takes a *smacofSSData* object
+as its argument and returns a value similar in structure to the *smacofSSResult* object returned by *smacofSS()*. Thus the returned object can be used directly the plotting routines of @sec-plotting.
 
-In terms of strategy we suggest that in an MDS analysis the researcher first computes one or more initial configurations (which are all independent MDS solutions anyway, except for the random configuration), and then give one or more of these initial configurations as the *xinit* argument to *smacofSS()*.
+In terms of strategy we suggest that in an MDS analysis the researcher first computes one or more
+initial configurations (which are all independent MDS solutions anyway, except for the random 
+configuration), and then give one or more of these initial configurations as the *xinit* argument
+to *smacofSS()*.
 
-The initial configuration routines all are based on finding a soution with a good value of *sstress*, defined in the same way as stress, but with squared distances and dissimilarities. Thus sstress is \begin{equation}
+The initial configuration routines all are based on finding a soution with a good value of *sstress*, 
+defined in the same way as stress, but with squared distances and dissimilarities. Thus sstress is
+\begin{equation}
 \sigma(X,\Delta):=\frac{\sum_{k=1}^mw_k(\delta_k^2-d_k^2(X))^2}{\sum_{k=1}^mw_k\delta_k^4}.
 \label{eq-sstressdef}
-\end{equation} The *smacofSSResult* returned by the initial configuration routines has an sstress value, instead of a stress value. Of source the stress value of the sulution will be revealed when it is used as an initial configuration in *smacofSS()*. Also, when *smacofSSResult* is used for a Shepardplot, squared distances and squared dhats are plotted against unsquared deltas so the plot has a quadratic shape.
+\end{equation} 
+The *smacofSSResult* returned by the initial configuration routines has an sstress value, instead
+of a stress value. Of source the stress value of the sulution will be revealed when it is used
+as an initial configuration in *smacofSS()*. Also, when *smacofSSResult* is used for a Shepardplot, squared distances and squared dhats are plotted against unsquared deltas so the plot has a quadratic shape.
 
 ### Torgerson {#sec-torgerson}
 
-The default initial configuration is set to NULL for *smacofSS()*. This is mean to emphasize the importance of choosing an initial configuration. But to make life easier for the user if *xinit* is null, then an initial configuration is computed by the *smacofTorgerson()* routine in *smacofAuxiliaries.R*. *smacofTorgerson()* is classical MDS (@torgerson_58), with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24).
+The default initial configuration is set to NULL for *smacofSS()*. This is mean to emphasize the 
+importance of choosing an initial configuration. But to make life easier for the user if
+*xinit* is null, then an initial configuration is computed by the *smacofTorgerson()* routine in *smacofAuxiliaries.R*. *smacofTorgerson()* is classical MDS (@torgerson_58), with the missing dissimilarities imputed using the average non-missing dissimilarity. The eigenvalues and eigenvectors are computed with *eigs-sym()* from the *RSpectra* package (@qiu_mei_24). 
 
-The Torgerson initial configuration works best for complete and unweighted data, but may also be satisfactory for a small number of randomly missing data and for weights that do not vary a great deal. Also remember that in the case of a really bad fit classical MDS may run into the problem of negative eigenvalues. This will give the initial configuration a dimension less than $p$, and since smacof iterations never increase dimensionality this will mean the final configuration will also have dimension less than $p$. Thus the Torgerson initial configuration is unsuitable, for example, for full-dimensional scaling (@deleeuw_groenen_mair_E_16e).
+The Torgerson initial configuration works best for complete and unweighted data, but may also be satisfactory for a small number of randomly missing data and for weights that do not vary a great deal. Also remember that
+in the case of a really bad fit classical MDS may run into the problem of negative eigenvalues. 
+This will give the initial configuration a dimension less than $p$, and since smacof iterations
+never increase dimensionality this will mean the final configuration will also have dimension
+less than $p$. Thus the Torgerson initial configuration is unsuitable, for example, for full-dimensional scaling (@deleeuw_groenen_mair_E_16e).
 
 ### Guttman {#sec-guttman}
 
 The Guttman-Lingoes initial configuration (@guttman_68), which handles missing data and unequal weights, is provided as *smacofGuttman()*. It is closely related to Hayashi's Quantification Method IV (@takane_77) and unlike the Torgerson method does not have a negative eigenvalue problem.
 
-Write sstress as $$
+Write sstress as
+$$
 \sigma(X)=K-2\sum_{k=1}^mw_k\delta_k^2d_k^2(X)+\sum_{k=1}^mw_kd_k^4(X).
-$$ By homogeneity this is scale-equivalent to maximizing the middle term over all configurations for which the third term is one. The middle term is equal to $\text{tr}\ X'BX$, where $$
+$$
+By homogeneity this is scale-equivalent to maximizing the middle term over all configurations
+for which the third term is one. The middle term is equal to $\text{tr}\ X'BX$, where
+$$
 B:=\sum_{k=1}^mw_k\delta_k^2A_k.
-$$ Note that $B$ is positive semi-definite. The third term $\smash{\sum_{k=1}^mw_kd_k^4(X)}$ is a homogeneous quartic in $X$, or equivalently a homogeneous quadratic in the elements of $C=XX'$. In the *elegant* algorithm, discussed in @sec-elegant, we majorize this quadratic to arrive at a simpler unweighted quadratic in $C$. In the Guttman initial configuration we maximize the middle term using the alternative quartic constraint $\text{tr}\ (X'X)^2=\text{tr}\ C^2=1$. Note that the $B$ takes weights and missing data into account, but the normalization constraint does not. The stationary equations are $BX=X(X'X)$ and thus the maximum is attained for $\smash{X=K\Lambda^\frac12}$, where $\Lambda$ are the $p$ dominant eigenvalues of $B$ and $K$ are the corresponding eigenvalues.
+$$
+Note that $B$ is positive semi-definite. The third term 
+$\smash{\sum_{k=1}^mw_kd_k^4(X)}$ is a homogeneous quartic in $X$, or equivalently a homogeneous
+quadratic in the elements of $C=XX'$. In the *elegant* algorithm, discussed in @sec-elegant,
+we majorize this quadratic to arrive at a simpler unweighted quadratic in $C$. 
+In the Guttman initial configuration we maximize
+the middle term using the alternative quartic constraint $\text{tr}\ (X'X)^2=\text{tr}\ C^2=1$. Note that the $B$ takes weights and missing data into account, but the normalization constraint does not. The stationary equations are $BX=X(X'X)$ and thus the maximum is attained for $\smash{X=K\Lambda^\frac12}$, where $\Lambda$
+are the $p$ dominant eigenvalues of $B$ and $K$ are the corresponding eigenvalues.
 
 ### Elegant {#sec-elegant}
 
-Our most expensive initial configuration routine is *smacofElegant()*, which implements an optimized version of the algorithm of @deleeuw_U_75b, as described recently in @deleeuw_E_25c. *smacofElegant()* is a stand-alone iterative metric scaling method, implemented in R. Using *smacofElegant()* means a lot of computation just to obtain an initial configuration for *smacofSS()*. On the other hand it is crucial in MDS to have an initial configuration which is as good as possible, because that is the best guarantee against local minima.
+Our most expensive initial configuration routine is *smacofElegant()*, which implements an optimized version of the algorithm of @deleeuw_U_75b, as described recently in @deleeuw_E_25c. *smacofElegant()* is a stand-alone iterative metric scaling method, implemented in R. Using  *smacofElegant()* means a  lot of computation just to obtain an initial
+configuration for *smacofSS()*. On the other hand it is crucial in MDS to have an initial configuration which is as good as possible, because that is the best guarantee against local minima. 
 
 ### Full-dimensional Scaling
 
-Finally, we have the option to uses the $p$ dominant dimensions of the *full-dimensiponal* scaling solution as initial configuration. We know that full-dimensional scaling converges to the global minimum of stress in $n-1$ dimensions, and actually to the global minimum for all $p\geq r$, where $r$ is the *Gower rank* of the data (@deleeuw_E_16k). This will provide a good initial estimate if $r$ is close to $p$.
+Finally, we have the option to uses the $p$ dominant dimensions of the full-dimensiponal scaling solution as initial configuration.
+We know that full-dimensional scaling converges to the global minimum of stress in $n-1$ dimensions,
+and actually to the global minimum for all $p\geq r$, where $r$ is the Gower rank of the data 
+(@deleeuw_E_16k). This will provide a good initial estimate if $r$ is close to $p$. 
+
+
 
 \sectionbreak
 
@@ -270,15 +323,15 @@ There are two functions in smacofDataUtilities.R
 
 ## Auxilaries
 
-There are several computational routines in *smacofAuxiliaries.R*. Ideally this should be C routines as well, but the R versions are only used once in a job and they rely on compiled code in their calculations anyway. So translating them to C will be no major speedup.
+There are several computational routines in *smacofAuxiliaries.R*. Ideally this should be C routines as well, but the R versions are only used once in a job and they rely on compiled code in their calculations anyway. So
+translating them to C will be no major speedup.
 
-If weighted is true
+The Moore-Penrose inverse of $V$ uses the regular inverse $V^+=(V+n^{-1}ee')^{-1}-n^{-1}ee'$, which is valid because the weights are assumed to be irreducible (@deleeuw_C_77). It is the only place in *smacofSS()* where a full symmetric matrix of order $n$ is used. What is passed to C is the strictly lower-diagonal part of $V$ in a vector. The matrix multiplications in the C code by the $B$ matrix and the $V$ matrix do not need the diagonal elements.
 
-The matrix multiplications in the C code by the $B$ matrix and the $V$ matrix do not need the diagonal elements.
-
-1.  *smacofTorgerson(theData, ndim)*. Returns initial configuration in $nobj\times ndim$ matrix using classical MDS.
-2.  *smacofGuttman(theData, ndim)*. Returns the Guttman-Lingoes initial configuration in $nobj\times ndim$ matrix.
-3.  *smacofElegant(theData, ndim)*. Returns the "elegant" initial configuration in $nobj\times ndim$ matrix.
+1.  *makeMPInverseV(theData)*. Returns vector with the lower diagonal of the Moore-Penrose inverse of $V$ matrix.
+2.  *smacofTorgerson(theData, ndim)*. Returns initial configuration in $nobj\times ndim$ matrix using classical MDS.
+3.  *smacofGuttman(theData, ndim)*. Returns the Guttman-Lingoes initial configuration in $nobj\times ndim$ matrix.
+4.  *smacofElegant(theData, ndim)*. Returns the "elegant" initial configuration in $nobj\times ndim$ matrix.
 
 ## Plotting {#sec-plotting}
 
@@ -298,7 +351,7 @@ A DistDhat-plot has distances on the horizontal axis and pseudo-distances on the
 
 # Example Data Sets
 
-There are a number of example data sets in the directory smacofSSData. They are mostly of the 20th century boomer type: small and collected from the aggregated judgments of human subjects. All data are available both as dist objects and as MDS data structures. The Wish and Iris data are not used in our computations but are included as examples of MDS data structures.
+There are a number of example data sets in the directory smacofSSData. They are mostly of the 20th century boomer type: small and collected from the aggregated judgments of human subjects. All data are available both as dist objects and as MDS data structures.
 
 ## Ekman Data
 
@@ -326,80 +379,87 @@ Classical iris data from @anderson_36 via @fisher_36. Euclidean distances over f
 
 ## Initial
 
-In this section we use the Ekman and Gruijter data to compare the three different initial configurations. Parameters are all set at defaults, which means a two-dimensional solution with unweighted and numerical options.
-
-```{r einitial, echo = FALSE, cache = TRUE}
+```{r}
+h <- smacofSS(ekmanData, ndim = 2, xinit = smacofTorgerson(ekmanData, ndim = 2)$conf, itmax = 1)
+h <- smacofSS(ekmanData, ndim = 2, xinit = smacofGuttman(ekmanData, ndim = 2)$conf, itmax = 1)
+h <- smacofSS(ekmanData, ndim = 2, xinit = smacofElegant(ekmanData, ndim = 2, itmax = 1, verbose = FALSE)$conf, itmax = 1)
 h1 <- smacofSS(ekmanData, ndim = 2, xinit = smacofTorgerson(ekmanData, ndim = 2)$conf)
 h2 <- smacofSS(ekmanData, ndim = 2, xinit = smacofGuttman(ekmanData, ndim = 2)$conf)
 h3 <- smacofSS(ekmanData, ndim = 2, xinit = smacofElegant(ekmanData, ndim = 2, verbose = FALSE)$conf)
+print(c(h1$stress, h1$niter))
+print(c(h2$stress, h2$niter))
+print(c(h3$stress, h3$niter))
 ```
 
-We start with the Ekman data, which have a very good fit in two dimensions. For the Torgerson initial configuration we need `r h1$niter` iterations to converge to stress `r h1$stress`. For the Guttman initial configuration stress is `r h2$stress` after `r h2$niter` iterations. And for elegant we use `r h3$niter` iterations to arrive at `r h3$stress`.
-
-```{r ginitial, echo = FALSE, cache = TRUE}
+```{r}
+h <- smacofSS(gruijterData, ndim = 2, xinit = smacofTorgerson(gruijterData, ndim = 2)$conf, itmax = 1)
+h <- smacofSS(gruijterData, ndim = 2, xinit = smacofGuttman(gruijterData, ndim = 2)$conf, itmax = 1)
+h <- smacofSS(gruijterData, ndim = 2, xinit = smacofElegant(gruijterData, ndim = 2, itmax = 1, verbose = FALSE)$conf, itmax = 1)
 h1 <- smacofSS(gruijterData, ndim = 2, xinit = smacofTorgerson(gruijterData, ndim = 2)$conf)
 h2 <- smacofSS(gruijterData, ndim = 2, xinit = smacofGuttman(gruijterData, ndim = 2)$conf)
 h3 <- smacofSS(gruijterData, ndim = 2, xinit = smacofElegant(gruijterData, ndim = 2, verbose = FALSE)$conf)
+print(c(h1$stress, h1$niter))
+print(c(h2$stress, h2$niter))
+print(c(h3$stress, h3$niter))
 ```
 
-We repeat this for the Gruijter data, which have a poor fit in two dimensions. For the Torgerson initial configuration we need `r h1$niter` iterations to converge to stress `r h1$stress`. For the Guttman initial configuration stress is `r h2$stress` after `r h2$niter` iterations. And for elegant we use `r h3$niter` iterations to arrive at `r h3$stress`.
 
-For both data smacofSS() seems to arrive at the same solution, no matter which initial configuration we use. There is some difference in the number of iterations that are required, and it seems the Torgerson initial configuration holds its own. *smacofElegant()* is expensive and does not seem to deliver any extra efficiency. So, on the basis of the mimited experience reported here, we do not recommend it for general use.
 
 ## Outcome
 
-In this section we compare the output (final stress, number of iterations) of smacofSym() and smacofSS() using the Ekman and Morse data. Note that smacofSym() reports the square root of the final stress, following @kruskal_64a, so for comparison purposes we square it again. All runs are started with the two-dimensional Torgerson solution and have the stop criteria *eps* equal to `r 1e-10` and *itmax* equal to 1000 (except when using the tertiary approach when *itmax* is 10000). In the weighted case the weights for Ekman are $w_k=\delta_k^2$, for Morse they are $w_k=\delta_k^{-1}$.
+In this section we compare the output (final stress, number of iterations) of smacofSym() and smacofSS() using the Ekman and Morse data. Note that smacofSym() reports the square root of the final stress, following @kruskal_64a, so for comparison purposes we square it again. All runs are started with the two-dimensional torgerson solution and have the stop criteria *eps* equal to 1e-10 and *itmax* equal to 1000 (except when using the tertiary approach when *itmax* is 10000). In the weighted case the weights for Ekman are $w_k=\delta_k^2$ and those for Morse are $w_k=\delta_k^{-1}$.
 
 ```{r somedataE, echo = FALSE}
 source("smacofSSData/ekmanData.R")
 xinit <- smacofTorgerson(ekmanData, 2)$conf
+print(xinit)
 ```
 
 ```{r compURE, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, weighted = FALSE, ordinal = FALSE)
+h2 <- smacofSSUR(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
 vecUR <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compUO1E, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, weighted = FALSE, ordinal = TRUE)
+h2 <- smacofSSUO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
 vecUO1 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compUO2E, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE, weighted = FALSE, ordinal = TRUE)
+h2 <- smacofSSUO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
 vecUO2 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compUO3E, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 10000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE, weighted = FALSE, ordinal = TRUE)
+h2 <- smacofSSUO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE)
 vecUO3 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWRE, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, type = "ratio", eps = 1e-10, weightmat = ekman ^ 2, itmax = 1000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, weighted = TRUE, ordinal = FALSE)
+h2 <- smacofSSWR(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
 vecWR <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWO1E, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ordinal", ties = "primary", weightmat = ekman ^ 2, eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, weighted = TRUE, ordinal = TRUE)
+h2 <- smacofSSWO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
 vecWO1 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWO2E, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ordinal", ties = "secondary", weightmat = ekman ^ 2, eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE, weighted = TRUE, ordinal = TRUE)
+h2 <- smacofSSWO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
 vecWO2 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWO3E, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(ekman, init = xinit, type = "ordinal", ties = "tertiary", weightmat = ekman ^ 2, eps = 1e-10, itmax = 10000)
-h2 <- smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE, weighted = TRUE, ordinal = TRUE)
+h2 <- smacofSSWO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE)
 vecWO3 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
@@ -427,49 +487,49 @@ xinit <- smacofTorgerson(morseData, 2)$conf
 
 ```{r compUR, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, ordinal = FALSE, weighted = FALSE)
+h2 <- smacofSSUR(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
 vecUR <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compUO1, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, ordinal = TRUE, weighted = FALSE)
+h2 <- smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
 vecUO1 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compUO2, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE, ordinal = TRUE, weighted = FALSE)
+h2 <- smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
 vecUO2 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compUO3, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE, ordinal = TRUE, weighted = FALSE)
+h2 <- smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
 vecUO3 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWR, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, ordinal = FALSE, weighted = TRUE)
+h2 <- smacofSSWR(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE)
 vecWR <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWO1, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ordinal", ties = "primary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, ordinal = TRUE, weighted = TRUE)
+h2 <- smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE)
 vecWO1 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWO2, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ordinal", ties = "secondary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE, ordinal = TRUE, weighted = TRUE)
+h2 <- smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE)
 vecWO2 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
 ```{r compWO3, cache = TRUE, echo = FALSE}
 h1 <- smacofSym(morse, init = xinit, type = "ordinal", ties = "tertiary", weightmat = 1 / morse, eps = 1e-10, itmax = 1000)
-h2 <- smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE, ordinal = TRUE, weighted = TRUE)
+h2 <- smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE)
 vecWO3 <- c(h1$stress ^ 2, h1$niter, h2$stress, h2$niter)
 ```
 
@@ -490,9 +550,7 @@ colnames(x) <- r
 kable(x, format = "simple", align = NULL, row.names = TRUE, caption = "Comparison smacofSym() and smacofSS() results Morse data")
 ```
 
-The conclusion is clear. For the Ekman example the results of *smacofSym()* and *smacofSS()* are identical. Not only the final stress and thus presumably the final configuration, but also the number of iterations and thus presumably all iterations. For Morse the results are **almost** identical. There are small deviations for the ordinal case, with
-in all cases the stress for smacofSym a tiny bit smaller. This requires explanation, and specifically a comparison
-of the monotone regression routines used in the two programs.
+The conclusion is clear. For the Ekman and Morse examples the results of *smacofSym()* and *smacofSS()* are identical.
 
 ## Time
 
@@ -501,7 +559,7 @@ The *microbenchmark* package (@mersmann_24) is intended to time small pieces of 
 ```{r microbenchmark_numE, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ratio", eps = 1e-10, itmax = 1000),
-smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, ordinal = FALSE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUR(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUR <- c(hss, hsy, hsy/hss)
@@ -510,7 +568,7 @@ vecUR <- c(hss, hsy, hsy/hss)
 ```{r microbenchmark_ord1E, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000),
-smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, ordinal = TRUE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUO1 <- c(hss, hsy, hsy/hss)
@@ -519,7 +577,7 @@ vecUO1 <- c(hss, hsy, hsy/hss)
 ```{r microbenchmark_ord2E, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000),
-smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE, ordinal = TRUE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUO2 <- c(hss, hsy, hsy/hss)
@@ -528,7 +586,7 @@ vecUO2 <- c(hss, hsy, hsy/hss)
 ```{r microbenchmark_ord3E, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 10000),
-smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE, ordinal = TRUE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUO3 <- c(hss, hsy, hsy/hss)
@@ -537,7 +595,7 @@ vecUO3 <- c(hss, hsy, hsy/hss)
 ```{r wgthnumE, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ratio", eps = 1e-10, weightmat = ekman ^ 2, itmax = 1000),
-smacofSS(ekmanData, ndim = 2,  xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, ordinal = FALSE, weighted = TRUE), control = list(order = "inorder"))
+smacofSSWR(ekmanData, ndim = 2,  xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecWR <- c(hss, hsy, hsy/hss)
@@ -546,7 +604,7 @@ vecWR <- c(hss, hsy, hsy/hss)
 ```{r wgthord1E, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ordinal", ties = "primary", eps = 1e-10, weightmat = ekman ^ 2, itmax = 1000),
-smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, ordinal = TRUE, weighted = TRUE), control = list(order = "inorder"))
+smacofSSWO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecWO1 <- c(hss, hsy, hsy/hss)
@@ -555,14 +613,14 @@ vecWO1 <- c(hss, hsy, hsy/hss)
 ```{r wgthord2E, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ordinal", ties = "secondary", eps = 1e-10, weightmat = ekman ^ 2, itmax = 1000),
-smacofSS(
+smacofSSWO(
   ekmanData,
   ndim = 2,
   xinit = xinit,
   eps = 1e-10,
   itmax = 1000,
   ties = 2,
-  verbose = FALSE, ordinal = TRUE, weighted = TRUE
+  verbose = FALSE
 ), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
@@ -572,7 +630,7 @@ vecWO2 <- c(hss, hsy, hsy/hss)
 ```{r wgthord3E, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(ekman, type = "ordinal", ties = "tertiary", eps = 1e-10, weightmat = ekman ^ 2, itmax = 10000),
-smacofSS(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE, ordinal = TRUE, weighted = TRUE), control = list(order = "inorder"))
+smacofSSWO(ekmanData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 10000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecWO3 <- c(hss, hsy, hsy/hss)
@@ -595,12 +653,12 @@ colnames(x) <- r
 kable(x, format = "simple", align = NULL, row.names = TRUE, caption = "Comparison smacofSym() and smacofSS() running times Ekman Data")
 ```
 
-The entries in the table for the tertiary approach are suspect, because tertiary uses a huge number of iterations to arrive at a perfect solution. In some of the microbenchmark runs it may actually use the full 10000 iterations. From the better conditioned numerical and ordinal solutions we see that smacofSS is between 3 and 45 times as fast as smacofSym. The improvement is largest in the unweighted analyses.
+The entries in the table for the tertiary approach are suspect, because it uses a huge number of iterations to arrive at a perfect solution. In many of the microbenchmark runs it may actually use the full 10000 iterations. From the better conditioned numerical and ordinalsolutions we see that smacofSS is between 4.5 and 56.7 times as fast as smacofSym. The improvment is largest in the unweighted analyses.
 
 ```{r microbenchmark_num, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ratio", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE , ordinal = FALSE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUR(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUR <- c(hss, hsy, hsy/hss)
@@ -609,7 +667,7 @@ vecUR <- c(hss, hsy, hsy/hss)
 ```{r microbenchmark_ord1, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, ordinal = TRUE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUO1 <- c(hss, hsy, hsy/hss)
@@ -618,7 +676,7 @@ vecUO1 <- c(hss, hsy, hsy/hss)
 ```{r microbenchmark_ord2, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE, ordinal = TRUE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 2, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUO2 <- c(hss, hsy, hsy/hss)
@@ -627,7 +685,7 @@ vecUO2 <- c(hss, hsy, hsy/hss)
 ```{r microbenchmark_ord3, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, itmax = 1000),
-smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE, ordinal = TRUE, weighted = FALSE), control = list(order = "inorder"))
+smacofSSUO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecUO3 <- c(hss, hsy, hsy/hss)
@@ -636,7 +694,7 @@ vecUO3 <- c(hss, hsy, hsy/hss)
 ```{r wgthnum, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ratio", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2,  xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE, ordinal = FALSE, weighted = TRUE), control = list(order = "inorder"))
+smacofSSWR(morseData, ndim = 2,  xinit = xinit, eps = 1e-10, itmax = 1000, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecWR <- c(hss, hsy, hsy/hss)
@@ -645,7 +703,7 @@ vecWR <- c(hss, hsy, hsy/hss)
 ```{r wgthord1, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "primary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE, ordinal = TRUE, weighted = TRUE), control = list(order = "inorder"))
+smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 1, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecWO1 <- c(hss, hsy, hsy/hss)
@@ -654,14 +712,14 @@ vecWO1 <- c(hss, hsy, hsy/hss)
 ```{r wgthord2, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "secondary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(
+smacofSSWO(
   morseData,
   ndim = 2,
   xinit = xinit,
   eps = 1e-10,
   itmax = 1000,
   ties = 2,
-  verbose = FALSE, ordinal = TRUE, weighted = TRUE
+  verbose = FALSE
 ), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
@@ -671,7 +729,7 @@ vecWO2 <- c(hss, hsy, hsy/hss)
 ```{r wgthord3, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
 smacofSym(morse, type = "ordinal", ties = "tertiary", eps = 1e-10, weightmat = 1 / morse, itmax = 1000),
-smacofSS(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE, ordinal = TRUE, weighted = TRUE), control = list(order = "inorder"))
+smacofSSWO(morseData, ndim = 2, xinit = xinit, eps = 1e-10, itmax = 1000, ties = 3, verbose = FALSE), control = list(order = "inorder"))
 hss <- median(h$time[2 * (1:100)])
 hsy <- median(h$time[-2 * (1:100)])
 vecWO3 <- c(hss, hsy, hsy/hss)
@@ -704,7 +762,7 @@ smacofSym(irisDist, eps = 1e-10, verbose = FALSE, type = "ordinal", ties = "prim
 smacofSSUO(irisData, verbose = FALSE))
 ```
 
-We see that for the Morse data smacofSS() is 4 to 14 times faster than smacofSym(). The difference is largest in the numerical case, and it is also larger for unweighted than for weighted. Strangely enough for the ordinal options the weighted case is faster than the corresponding non-weighted case, although a majorization iteration in the weighted case is more expensive. This is undoubtedly because the outcome results in the previous section show that fewer iterations are used in the weighted case. We also see that primary is faster than secondary and secondary is faster than tertiary. Again, there is a need for some tinkering with the code to see if these relations are real and stable or are a result of poor coding and various artefacts. Note that we have used microbenchmark in such a way that smacofSS() is always run after the corresponding smacofSym(), and that the eight different basic combinations or weighted and ordinal are always run in the same order.
+We see that smacofSS() is four to eighteen times faster than smacofSym(). The difference is largest in the numerical case, and it is also larger for unweighted than for weighted. Strangely enough for the ordinal options the weighted case generally seems faster than the corresponding non-weighted case. We also see that primary is faster than secondary and secondary is faster than tertiary. Again, there is a need for some tinkering with the code to see if these relations are real and stable or are a result of poor coding and various artefacts. Note that we have used microbenchmark in such a way that smacofSS() is always run after the corresponding smacofSym(), and that the eight different basic combinations or weighted and ordinal are always run in the same order.
 
 \sectionbreak
 
@@ -714,21 +772,21 @@ To show some plots we repeat eight possible analyses using the Ekman and Morse d
 
 The next eight pages have Shepard plots and DistDhat plots for each of the four unweighted analyses. No plots are given for the weighted analyses, because they would illustrate essentially the same points. We made the plots large so they show some detail. Shepard plots have *fitlines* equal to TRUE, DistDhat plots have *fitlines* equal to TRUE for the Ekman data and FALSE for the Morse data. The sum of the squared lengths of the vertical fitlines in the Shepard plots is the stress. In the DistDhat plots the sum of squares of distances of the points to their orthogonal projections on the line is also the stress. Thus we can see from the plots where the largest residuals are, although the plot does not show which pair of points the fitlines correspond with. That information can easily be obtained from the numerical output.
 
-The Ekman example has an exceptionally good fit, even in the numerical case. Still, allowing for ordinal transformations gives a major improvement. Especially the DistDhat plots in the ordinal case show the different ways of handling tie blocks. The tertiary approach gives what is essentially a perfect fit, but the Shepard plot shows that in order to achieve this deviations from monotonicity are required.
+The Ekman example has an exceptionally good fit, even in the numerical case. Still,allowing for ordinal transformations gives a major improvement. Especially the DistDhat plots in the ordinal case show the different ways of handling tie blocks. The tertiary approach gives what is essentially a perfect fit, but the Shepard plot shows that in order to achieve this deviations from monotonicity are required.
 
-The Morse example has a bad numerical fit, and the improvements by the ordinal options are huge. There are no fitlines in the DistDhat plots, because that would mainly result in big black blobs. As in the Ekman example the tertiary approach gives close to perfect fit, at the cost of many deviations from monotonicity.
+The Morse example has a bad numerical fit, and the improvements by the oidinal options are huge. There are no fitlines in the DistDhat plots, because that would mainly result in big black blobs. As in the Ekman example the tertiary approach gives close to perfect fit, at the cost of many deviations from monotonicity.
 
 ```{r ekmanall, echo = FALSE, cache = TRUE}
 source("smacofSSData/ekmanData.R")
 xinit <- smacofTorgerson(ekmanData, 2)$conf
-hUR <- smacofSS(ekmanData, xinit = xinit, ordinal = FALSE, weighted = FALSE, ties = 1, verbose = FALSE)
-hUO1 <- smacofSS(ekmanData, xinit = xinit, ordinal = TRUE, weighted = FALSE, ties = 1, verbose = FALSE)
-hUO2 <- smacofSS(ekmanData, xinit = xinit, ordinal = TRUE, weighted = FALSE, ties = 2, verbose = FALSE)
-hUO3 <- smacofSS(ekmanData, xinit = xinit, ordinal = TRUE, weighted = FALSE, ties = 3, verbose = FALSE)
-hWR <- smacofSS(ekmanData, xinit = xinit, ordinal = FALSE, weighted = TRUE, verbose = FALSE)
-hWO1 <- smacofSS(ekmanData, xinit = xinit, ordinal = TRUE, weighted = TRUE, ties = 1, verbose = FALSE)
-hWO2 <- smacofSS(ekmanData, xinit = xinit, ordinal = TRUE, weighted = TRUE, ties = 2, verbose = FALSE)
-hWO3 <- smacofSS(ekmanData, xinit = xinit, ordinal = TRUE, weighted = TRUE, ties = 3, verbose = FALSE)
+hUR <- smacofSS(ekmanData, xinit = xinit, verbose = FALSE)
+hUO1 <- smacofSS(ekmanData, xinit = xinit, ordinal = 1, verbose = FALSE)
+hUO2 <- smacofSS(ekmanData, xinit = xinit, ordinal = 2, verbose = FALSE)
+hUO3 <- smacofSS(ekmanData, xinit = xinit, ordinal = 3, verbose = FALSE)
+hWR <- smacofSS(ekmanData, xinit = xinit, weighted = TRUE, verbose = FALSE)
+hWO1 <- smacofSS(ekmanData, xinit = xinit, ordinal = 1, weighted = TRUE, verbose = FALSE)
+hWO2 <- smacofSS(ekmanData, xinit = xinit, ordinal = 2, weighted = TRUE, verbose = FALSE)
+hWO3 <- smacofSS(ekmanData, xinit = xinit, ordinal = 3, weighted = TRUE, verbose = FALSE)
 ```
 
 \sectionbreak
@@ -748,14 +806,14 @@ smacofDistDhatPlot(hUO3,  main = "DistDhat Plot, Ekman Data, Unweighted, Ordinal
 ```{r morseall, echo = FALSE, cache = TRUE}
 source("smacofSSData/morseData.R")
 xinit <- smacofTorgerson(morseData, 2)$conf
-hUR <- smacofSS(morseData, xinit = xinit, ordinal = FALSE, weighted = FALSE, verbose = FALSE)
-hUO1 <- smacofSS(morseData, xinit = xinit, ordinal = TRUE, weighted = FALSE, ties = 1, verbose = FALSE)
-hUO2 <- smacofSS(morseData, xinit = xinit, ordinal = TRUE, weighted = FALSE, ties = 2, verbose = FALSE)
-hUO3 <- smacofSS(morseData, xinit = xinit, ordinal = TRUE, weighted = FALSE, ties = 3, verbose = FALSE)
-hWR <- smacofSS(morseData, xinit = xinit, ordinal = FALSE, weighted = TRUE, verbose = FALSE)
-hWO1 <- smacofSS(morseData, xinit = xinit, ordinal = TRUE, weighted = TRUE, ties = 1, verbose = FALSE)
-hWO2 <- smacofSS(morseData, xinit = xinit, ordinal = TRUE, weighted = TRUE, ties = 2, verbose = FALSE)
-hWO3 <- smacofSS(morseData, xinit = xinit, ordinal = TRUE, weighted = TRUE, ties = 3, verbose = FALSE)
+hUR <- smacofSS(morseData, xinit = xinit, verbose = FALSE)
+hUO1 <- smacofSS(morseData, xinit = xinit, ordinal = 1, verbose = FALSE)
+hUO2 <- smacofSS(morseData, xinit = xinit, ordinal = 2, verbose = FALSE)
+hUO3 <- smacofSS(morseData, xinit = xinit, ordinal = 3, verbose = FALSE)
+hWR <- smacofSS(morseData, xinit = xinit, weighted = TRUE, verbose = FALSE)
+hWO1 <- smacofSS(morseData, xinit = xinit, ordinal = 1, weighted = TRUE, verbose = FALSE)
+hWO2 <- smacofSS(morseData, xinit = xinit, ordinal = 2, weighted = TRUE, verbose = FALSE)
+hWO3 <- smacofSS(morseData, xinit = xinit, ordinal = 3, weighted = TRUE, verbose = FALSE)
 ```
 
 \sectionbreak
@@ -772,6 +830,76 @@ smacofDistDhatPlot(hUO2, fitlines = FALSE, main = "DistDhat Plot, Morse Data, Un
 smacofDistDhatPlot(hUO3, fitlines = FALSE, main = "DistDhat Plot, Morse Data, Unweighted, Ordinal, Tertiary")
 ```
 
+
+```{r irisdata, cache = TRUE}
+source("smacofSSData/irisData.R")
+xinit <- smacofTorgerson(irisData, 2)$conf
+h1 <- smacofSym(irisDist, ndim = 2, init = xinit, type = "ratio", eps = 1e-10, itmax = 1000)
+h2 <- smacofSS(irisData, xinit = xinit, verbose = FALSE)
+print(h1$stress)
+print(h1$niter)
+print(h2$stress)
+print(h2$niter)
+```
+
 \sectionbreak
+
+# Code
+
+## R Code
+
+### smacofSS.R
+
+```{r code1, code = readLines("smacofSS.R"), eval = FALSE}
+```
+
+
+### smacofAuxiliaries.R
+
+```{r code6, code = readLines("smacofAuxiliaries.R"), eval = FALSE}
+```
+
+### smacofDataUtilities.R
+
+```{r code7, code = readLines("smacofDataUtilities.R"), eval = FALSE}
+```
+
+### smacofPlots.R
+
+```{r code8, code = readLines("smacofPlots.R"), eval = FALSE}
+```
+
+### smacofElegant.R
+
+### smacofElegant.R
+
+```{r code9, code = readLines("smacofElegant.R"), eval = FALSE}
+```
+
+## C Code
+
+## smacofSSUREngine.c
+
+```{c code10, code = readLines("smacofSSUREngine.c"), eval = FALSE}
+```
+
+## smacofSSEngine.c
+
+```{c code11, code = readLines("smacofSSEngine.c"), eval = FALSE}
+```
+
+## smacofSSUOEngine.c
+
+```{c code12, code = readLines("smacofSSUOEngine.c"), eval = FALSE}
+```
+
+## smacofSSWOEngine.c
+
+```{c code13, code = readLines("smacofSSWOEngine.c"), eval = FALSE}
+```
+
+\sectionbreak
+
+
 
 # References

@@ -37,13 +37,12 @@ smacofSS <- function(theData,
     j <- jind[k]
     edis[k] <- sqrt(sum((xold[i, ] - xold[j, ])^2))
   }
-  dhat <- dhat * sqrt(ndat / sum(wght * dhat^2))
   sdd <- sum(wght * edis^2)
   sde <- sum(wght * dhat * edis)
   lbd <- sde / sdd
   edis <- lbd * edis
   xold <- lbd * xold
-  sold <- sum(wght * (dhat - edis)^2) / ndat
+  sold <- sum(wght * (dhat - edis)^2) / sum(wght * dhat^2)
   snew <- 0.0
   xold <- as.vector(xold)
   xnew <- xold
@@ -86,7 +85,8 @@ smacofSS <- function(theData,
     iind = h$iind,
     jind = h$jind,
     weighted = weighted,
-    ordinal = ordinal
+    ordinal = ordinal,
+    ties = h$ties
   )
   class(result) <- c("smacofSSResult", "smacofSSUOResult")
   return(result)

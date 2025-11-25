@@ -8,5 +8,8 @@ shlib: smacofSS.h $(SSRC)
 	R CMD SHLIB -o smacofSS.so $(SSRC)
 
 clean:
+	rm -f *.o
+
+pristine:
 	rm -f *.o *.so
 

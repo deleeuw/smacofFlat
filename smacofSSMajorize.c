@@ -1,6 +1,6 @@
 #include "smacofSS.h"
 
-void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
+void smacofSSMajorize(int* nobj, int* ndim, int* ndat, int* iind,
                       int* jind, int* weighted, double* wght, double* vinv,
                       double* edis, double* dhat, double* xold, double* xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;

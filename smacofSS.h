@@ -32,13 +32,15 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
                     int* iind, int* jind, int* blks, double* wght, double* edis,
                     double* dhat, double* xold, double* xnew);
 
-void smacofSSMajorize(int* nobj, int* ndim, int* ndat, double* snew, int* iind,
+void smacofSSMajorize(int* nobj, int* ndim, int* ndat, int* iind,
                       int* jind, int* weighted, double* wght, double* vinv, double* edis,
                       double* dhat, double* xold, double* xnew);
 
-void smacofSSMonotone(int* ndat, int* ties, double* snew,
+void smacofSSMonotone(int* ndat, int* ties,
                        int* iind, int* jind, int* blks, double* edis,
                        double* dhat, double* wght);
+
+double smacofSSLoss(int* ndat, double* edis, double* dhat, double* wght);
 
 static inline void *xmalloc(const size_t size) {
   void *p = malloc(size);
