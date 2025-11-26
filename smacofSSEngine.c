@@ -9,15 +9,16 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
     double* vinv = xmalloc(Nobj * (Nobj - 1) * sizeof(double) / 2);
     (void)smacofMPInverseV(nobj, ndat, iind, jind, wght, vinv);
     while (true) {
-        (void)smacofSSMajorize(nobj, ndim, ndat, iind, jind, weighted,
-                               wght, vinv, edis, dhat, xold, xnew);
+        (void)smacofSSMajorize(nobj, ndim, ndat, iind, jind, weighted, wght,
+                               vinv, edis, dhat, xold, xnew);
         double smid = smacofSSLoss(ndat, edis, dhat, wght);
         if (*ordinal) {
             for (int k = 0; k < Ndat; k++) {
                 dhat[k] = edis[k];
             }
-            (void)smacofSSMonotone(ndat, ties, iind, jind, blks, edis,
-                                   dhat, wght);
+            (void)smacofSSMonotone(ndat, ties, iind, jind, blks, edis, dhat,
+                                   wght);
+            (void)smacofSSNormDhat(ndat, dhat, wght);
             *snew = smacofSSLoss(ndat, edis, dhat, wght);
         } else {
             *snew = smid;
@@ -42,14 +43,26 @@ void smacofSSEngine(int* nobj, int* ndim, int* ndat, int* itel, int* ties,
         *itel += 1;
     }
     xfree(vinv);
+    return;
 }
 
-double smacofSSLoss(int* ndat, double* edis, double* dhat,
-                           double* wght) {
-    double loss = 0.0, norm = 0.0;
-    for (int k = 0; k < *ndat; k++) {
-        loss += wght[k] * SQUARE(dhat[k] -  edis[k]);
+double smacofSSLoss(int* ndat, double* edis, double* dhat, double* wght) {
+    int Ndat = *ndat;
+    double loss = 0.0;
+    for (int k = 0; k < Ndat; k++) {
+        loss += wght[k] * SQUARE(dhat[k] - edis[k]);
+    }
+    return loss;
+}
+
+void smacofSSNormDhat(int* ndat, double* dhat, double* wght) {
+    int Ndat = *ndat;
+    double norm = 0.0;
+    for (int k = 0; k < Ndat; k++) {
         norm += wght[k] * SQUARE(dhat[k]);
     }
-    return loss / norm;
+    norm = sqrt(norm);
+    for (int k = 0; k < Ndat; k++) {
+        dhat[k] /= norm;
+    }
 }

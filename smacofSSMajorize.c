@@ -1,8 +1,8 @@
 #include "smacofSS.h"
 
-void smacofSSMajorize(int* nobj, int* ndim, int* ndat, int* iind,
-                      int* jind, int* weighted, double* wght, double* vinv,
-                      double* edis, double* dhat, double* xold, double* xnew) {
+void smacofSSMajorize(int* nobj, int* ndim, int* ndat, int* iind, int* jind,
+                      int* weighted, double* wght, double* vinv, double* edis,
+                      double* dhat, double* xold, double* xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
     double* xtmp = xmalloc(Nobj * Ndim * sizeof(double));
     for (int k = 0; k < Nobj * Ndim; k++) {

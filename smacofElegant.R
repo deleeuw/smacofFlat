@@ -5,7 +5,7 @@ smacofElegant <- function(theData,
                           itmax = 1000,
                           eps = 1e-10,
                           quick = FALSE,
-                          verbose = TRUE) {
+                          verbose = FALSE) {
   nobj <- theData$nobj
   ndat <- theData$ndat
   iind <- theData$iind

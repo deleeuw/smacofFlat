@@ -42,6 +42,8 @@ void smacofSSMonotone(int* ndat, int* ties,
 
 double smacofSSLoss(int* ndat, double* edis, double* dhat, double* wght);
 
+void smacofSSNormDhat(int *ndat, double *dhat, double *wght);
+
 static inline void *xmalloc(const size_t size) {
   void *p = malloc(size);
   if (!p && size) {

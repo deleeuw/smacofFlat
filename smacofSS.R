@@ -26,6 +26,7 @@ smacofSS <- function(theData,
   iind <- theData$iind
   jind <- theData$jind
   dhat <- theData$delta
+  dhat <- dhat / sqrt(sum(dhat^2))
   wght <- theData$weights
   if (!weighted) {
     wght <- rep(1, ndat)
@@ -42,7 +43,7 @@ smacofSS <- function(theData,
   lbd <- sde / sdd
   edis <- lbd * edis
   xold <- lbd * xold
-  sold <- sum(wght * (dhat - edis)^2) / sum(wght * dhat^2)
+  sold <- sum(wght * (dhat - edis)^2)
   snew <- 0.0
   xold <- as.vector(xold)
   xnew <- xold
