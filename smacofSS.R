@@ -26,11 +26,11 @@ smacofSS <- function(theData,
   iind <- theData$iind
   jind <- theData$jind
   dhat <- theData$delta
-  dhat <- dhat / sqrt(sum(dhat^2))
   wght <- theData$weights
   if (!weighted) {
     wght <- rep(1, ndat)
   }
+  dhat <- dhat / sqrt(sum(wght * dhat^2))
   blks <- theData$blocks
   edis <- rep(0, ndat)
   for (k in 1:ndat) {
