@@ -1,6 +1,5 @@
 dyn.load("smacofSS.so")
 
-source("smacofAuxiliaries.R")
 source("smacofDataUtilities.R")
 source("smacofPlots.R")
 source("smacofTorgerson.R")
