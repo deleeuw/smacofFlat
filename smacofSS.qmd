@@ -250,9 +250,6 @@ The list of objects returned by *smacofSS()* mimics, as much as possible, the li
 
 One important special case should be kept in mind. In the ordinal case with the primary approach to ties, the data are (potentially) reordered within tie blocks in each iteration. In each iteration we have to reorder the indices *iind*, *jind*, and in the weighted case the weights. There is no need to reorder delta and the blocks, because the only ordering changes are within blocks. Ultimately this means that if smacofSS() returns a list, then in that list *iind*, *jind*, and in the weighted case *weightmat* will be ordered differently from the corresponding columns in the MDS data structure. No reordering is going on using the secondary and tertiary approaches.
 
-
-
-
 # Details {#sec-details}
 
 ## Interface C and R {#sec-interface}
