@@ -1,5 +1,6 @@
 
 
+
 makeMDSData <- function(delta, weights = NULL) {
   nobj <- attr(delta, "Size")
   if (is.null(weights)) {
@@ -11,7 +12,7 @@ makeMDSData <- function(delta, weights = NULL) {
     for (i in (j + 1):nobj) {
       if ((weights[k] > 0) &&
           (!is.na(weights[k])) && (!is.na(delta[k]))) {
-        theData <- rbind(theData, c(i, j, delta[k], 0, weights[k]))
+          theData <- rbind(theData, c(i, j, delta[k], 0, weights[k]))
       }
       k <- k + 1
     }
@@ -43,7 +44,7 @@ makeMDSData <- function(delta, weights = NULL) {
 }
 
 fromMDSData <- function(theData) {
-  ndat <-theData$ndat
+  ndat <- theData$ndat
   nobj <- theData$nobj
   delta <- matrix(0, nobj, nobj)
   weights <- matrix(0, nobj, nobj)
@@ -51,7 +52,7 @@ fromMDSData <- function(theData) {
     i <- theData$iind[k]
     j <- theData$jind[k]
     delta[i, j] <- delta[j, i] <- theData$delta[k]
-    weights[i, j] <- weights[j, i] <- theData$weights[kdelta]
+    weights[i, j] <- weights[j, i] <- theData$weights[k]
   }
   return(list(delta = as.dist(delta), weights = as.dist(weights)))
 }
@@ -60,7 +61,8 @@ fromMDSData <- function(theData) {
 smacofRandomConfiguration <- function(theData, ndim = 2) {
   nobj <- theData$nobj
   x <- matrix(rnorm(nobj * ndim), nobj, ndim)
-  return(apply(x, 2, function(x) x - mean(x)))
+  return(apply(x, 2, function(x)
+    x - mean(x)))
 }
 
 matrixPrint <- function(x,

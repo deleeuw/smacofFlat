@@ -1,7 +1,7 @@
 #include "smacofSS.h"
 
-void smacofSSMonotone(int* ndat, int* ties, int* iind, int* jind, int* blks,
-                      double* edis, double* dhat, double* wght) {
+void smacofSSMonotone(const int* ndat, const int* ties, int* iind, int* jind,
+                      int* blks, double* edis, double* dhat, double* wght) {
     if (*ties == 1) {
         (void)primaryApproach(ndat, blks, dhat, wght, edis, iind, jind);
     }

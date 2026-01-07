@@ -1,4 +1,7 @@
+source("smacofDataUtilities.R")
+
 data(morse, package = "smacof")
-morseData <- makeMDSData(morse, 1 / morse)
-morseLabels <- as.character(attr(morse, "Labels"))
+morseDist <- morse
+morseMatrix <- as.matrix(morse)
+morseData <- makeMDSData(morseDist)
 
