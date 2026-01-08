@@ -34,4 +34,5 @@ void mySort(double* x, double* w, double* d, int* iind, int* jind,
         jind[i] = xi[i].jndex;
     }
     xfree(xi);
+    return;
 }

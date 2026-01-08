@@ -51,9 +51,9 @@ suppressPackageStartupMessages(library(microbenchmark, quietly = TRUE))
 
 ```{r loadsources, echo = FALSE}
 source("smacofACX.R")
-source("acxEkman.R")
-source("acxGruijter.R")
-source("acxMorse.R")
+source("smacofSSData/ekmanData.R")
+source("smacofSSData/gruijterData.R")
+source("smacofSSData/morseData.R")
 ```
 
 **Note:** This is a working manuscript which will be expanded/updated

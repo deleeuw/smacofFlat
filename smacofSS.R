@@ -8,20 +8,24 @@ smacofSS <- function(theData,
                      ndim = 2,
                      xinit = NULL,
                      ties = 1,
+                     iord = 2,
+                     safe = 1,
                      itmax = 1000,
-                     eps = 1e-10,
+                     eps = 1e-6,
                      digits = 10,
                      width = 15,
                      verbose = TRUE,
                      weighted = FALSE,
                      ordinal = FALSE) {
   if (is.null(xinit)) {
-    xinit <- smacofTorgerson(theData, 2)$conf
+    xinit <- smacofTorgerson(theData, ndim)$conf
   }
   xold <- xinit
+  nord <- length(iord)
   nobj <- theData$nobj
   ndat <- theData$ndat
   itel <- 1
+  kord <- 2
   iind <- theData$iind
   jind <- theData$jind
   dhat <- theData$delta
@@ -51,7 +55,10 @@ smacofSS <- function(theData,
     nobj = as.integer(nobj),
     ndim = as.integer(ndim),
     ndat = as.integer(ndat),
+    nord = as.integer(nord),
+    safe = as.integer(safe),
     itel = as.integer(itel),
+    kord = as.integer(kord),
     ties = as.integer(ties),
     itmax = as.integer(itmax),
     digits = as.integer(digits),
@@ -64,6 +71,7 @@ smacofSS <- function(theData,
     eps = as.double(eps),
     iind = as.integer(iind - 1),
     jind = as.integer(jind - 1),
+    iord = as.integer(iord),
     blks = as.integer(blks),
     wght = as.double(wght),
     edis = as.double(edis),

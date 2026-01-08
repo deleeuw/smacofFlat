@@ -1,7 +1,7 @@
 #include "smacofSS.h"
 
-void smacofMPInverseV(int* nobj, int* ndat, int* iind, int* jind, double* wght,
-                      double* vinv) {
+void smacofMPInverseV(const int* nobj, const int* ndat, int* iind, int* jind,
+                      double* wght, double* vinv) {
     int Nobj = *nobj, Ndat = *ndat;
     double** v = xcalloc(Nobj, sizeof(double*));
     for (int i = 0; i < Nobj; i++) {

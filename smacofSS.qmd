@@ -323,6 +323,7 @@ Our most expensive initial configuration routine is *smacofElegant()*, which imp
 
 Finally, we have the option to uses the $p$ dominant dimensions of the *full-dimensiponal* scaling solution as initial configuration. We know that full-dimensional scaling converges to the global minimum of stress in $n-1$ dimensions, and actually to the global minimum for all $p\geq r$, where $r$ is the *Gower rank* of the data (@deleeuw_E_16k). This will provide a good initial estimate if $r$ is close to $p$.
 
+### Acceleration
 
 
 # Utilities

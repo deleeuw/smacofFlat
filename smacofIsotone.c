@@ -1,6 +1,6 @@
 #include "smacofSS.h"
 
-void primaryApproach(const int* ndat, const int* blks, double* x, double* w,
+void primaryApproach(const int* ndat, int* blks, double* x, double* w,
                      double* d, int* iind, int* jind) {
     int Ndat = *ndat;
     for (int i = 0; i < Ndat; i++) {
@@ -42,7 +42,7 @@ void primaryApproach(const int* ndat, const int* blks, double* x, double* w,
     return;
 }
 
-void secondaryApproach(const int* ndat, const int* blks, double* x, double* w) {
+void secondaryApproach(const int* ndat, int* blks, double* x, double* w) {
     int nblk = 0, Ndat = *ndat;
     for (int k = 0; k < Ndat; k++) {
         if (blks[k] > 0) {
@@ -69,7 +69,7 @@ void secondaryApproach(const int* ndat, const int* blks, double* x, double* w) {
     return;
 }
 
-void tertiaryApproach(const int* ndat, const int* blks, double* x, double* w) {
+void tertiaryApproach(const int* ndat, int* blks, double* x, double* w) {
     int nblk = 0, Ndat = *ndat;
     for (int k = 0; k < Ndat; k++) {
         if (blks[k] > 0) {
@@ -101,9 +101,9 @@ void tertiaryApproach(const int* ndat, const int* blks, double* x, double* w) {
     return;
 }
 
-void tieBlockAverages(const int* ndat, const int* nblk, const int* blks,
-                      const double* x, const double* w, double* xsum,
-                      double* wsum, int* csum, double* xave) {
+void tieBlockAverages(const int* ndat, const int* nblk, int* blks, double* x,
+                      double* w, double* xsum, double* wsum, int* csum,
+                      double* xave) {
     int iblk = 0, Ndat = *ndat, Nblk = *nblk;
     for (int k = 0; k < Ndat; k++) {
         if (blks[k] > 0) {
@@ -122,6 +122,18 @@ void tieBlockAverages(const int* ndat, const int* nblk, const int* blks,
         xave[i] = xsum[i] / wsum[i];
     }
 }
+
+// Function monotone(),
+// performs simple linear ordered monotone regression
+// Copyright (C) 2020 Frank M.T.A. Busing (e-mail: busing at fsw dot leidenuniv
+// dot nl) This function is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation. This program is distributed in the hope that it
+// will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+// of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+// Public License for more details. You should have received a copy of the GNU
+// General Public License along with this function. If not, see
+// <https://www.gnu.org/licenses/>.
 
 void monotone(const int* n, double* x, double* w) {
     double* rx = &x[-1];
