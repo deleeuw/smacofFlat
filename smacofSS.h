@@ -10,6 +10,7 @@
 
 #define SQUARE(x) ((x) * (x))
 #define CUBE(x) ((x) * (x) * (x))
+#define EPS 1e-15
 #define true 1
 #define false 0
 
@@ -25,7 +26,9 @@ void tieBlockAverages(const int* ndat, const int* nblk, int* blks,
 void monotone(const int* n, double* x, double* w);
 void matrixPrint(const double* x, const size_t Nrow, const size_t Ncol,
                  const int digits, const int width);
-
+void vectorBounds(const double* x, const size_t Nelm,
+                 const int digits, const int width);
+  
 // in smacofSort.c
 
 int myComp(const void *, const void *);

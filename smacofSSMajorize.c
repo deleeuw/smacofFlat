@@ -1,14 +1,15 @@
 #include "smacofSS.h"
 
 void smacofSSMajorize(const int* nobj, const int* ndim, const int* ndat,
-                      const int* itel, int *kord, const int* nord, int* iind, int* jind,
-                      const int* iord, const int* safe, const int* weighted,
-                      double* wght, double* vinv, double* dhat, double* xold,
-                      double* xnew) {
-    int Nobj = *nobj, Ndim = *ndim, Itel = *itel, Nord = *nord, Ndat = *ndat, Kord = *kord;
+                      const int* itel, int* kord, const int* nord, int* iind,
+                      int* jind, const int* iord, const int* safe,
+                      const int* weighted, double* wght, double* vinv,
+                      double* dhat, double* xold, double* xnew) {
+    int Nobj = *nobj, Ndim = *ndim, Itel = *itel, Nord = *nord, Ndat = *ndat,
+        Kord = *kord;
     Kord = iord[(Itel - 1) % Nord];
     int ncor = Nobj * Ndim, Safe = *safe;
-    double sone = 0.0, snew = 0.0;
+    double snul = 0.0, snew = 0.0;
     double* xone = xmalloc(Nobj * Ndim * sizeof(double));
     double* xtwo = xmalloc(Nobj * Ndim * sizeof(double));
     double* xthr = xmalloc(Nobj * Ndim * sizeof(double));
@@ -20,7 +21,7 @@ void smacofSSMajorize(const int* nobj, const int* ndim, const int* ndat,
                                    vinv, dhat, xold, xone);
     if (Safe) {
         (void)smacofSSDistances(nobj, ndim, ndat, iind, jind, xone, edis);
-        sone = smacofSSLoss(ndat, edis, dhat, wght);
+        snul = smacofSSLoss(ndat, edis, dhat, wght);
     }
     if (Kord == 0) {
         for (int i = 0; i < ncor; i++) {
@@ -31,14 +32,8 @@ void smacofSSMajorize(const int* nobj, const int* ndim, const int* ndat,
             done[i] = xone[i] - xold[i];
         }
         if (Kord == 1) {
-            double sum1 = 0.0, sum2 = 0.0;
             for (int i = 0; i < ncor; i++) {
-                sum1 += xold[i] * done[i];
-                sum2 += SQUARE(done[i]);
-            }
-            double sig1 = fabs(sum1 / sum2);
-            for (int i = 0; i < ncor; i++) {
-                xnew[i] = xold[i] + sig1 * done[i];
+                xnew[i] = xold[i] + 2.0 * done[i];
             }
         } else {
             (void)smacofSSGuttmanTransform(nobj, ndim, ndat, iind, jind,
@@ -84,7 +79,7 @@ void smacofSSMajorize(const int* nobj, const int* ndim, const int* ndat,
     if (Safe) {
         (void)smacofSSDistances(nobj, ndim, ndat, iind, jind, xnew, edis);
         snew = smacofSSLoss(ndat, edis, dhat, wght);
-        if (sone < snew) {
+        if (snul < snew) {
             for (int i = 0; i < ncor; i++) {
                 xnew[i] = xone[i];
                 Kord = 0;
@@ -115,6 +110,9 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
     }
     for (int k = 0; k < Ndat; k++) {
         int i = iind[k], j = jind[k];
+        if (edis[k] < EPS) {
+          continue;
+        }
         double ecof = wght[k] * dhat[k] / edis[k];
         for (int s = 0; s < Ndim; s++) {
             int iobj = i + Nobj * s, jobj = j + Nobj * s;
@@ -130,8 +128,10 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
             xnew[k] = xtmp[k];
         }
     }
+    // here follows a bug
     if (Weighted) {
-        for (int k = 0; k < Ndat; k++) {
+        /*
+         for (int k = 0; k < Ndat; k++) {
             int i = iind[k], j = jind[k];
             double ecof = -vinv[k];
             for (int s = 0; s < Ndim; s++) {
@@ -141,6 +141,20 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
                 xnew[jobj] -= add;
             }
         }
+        */
+      int k = 0;
+      for (int j = 0; j < Nobj - 1; j++) {
+        for (int i = j + 1; i < Nobj; i++) {
+          double ecof = -vinv[k];
+          for (int s = 0; s < Ndim; s++) {
+            int iobj = i + Nobj * s, jobj = j + Nobj * s;
+            double add = ecof * (xtmp[iobj] - xtmp[jobj]);
+            xnew[iobj] += add;
+            xnew[jobj] -= add;
+          }          
+          k++;
+        }
+      }
     } else {
         for (int i = 0; i < Nobj; i++) {
             int is = i;

@@ -1,7 +1,7 @@
 #include "smacofSS.h"
 
 void smacofSSEngine(const int* nobj, const int* ndim, const int* ndat,
-                    const int* nord, const int* safe, int* itel, int *kord,
+                    const int* nord, const int* safe, int* itel, int* kord,
                     const int* ties, const int* itmax, const int* digits,
                     const int* width, const int* verbose, const int* ordinal,
                     const int* weighted, double* sold, double* snew,
@@ -9,12 +9,13 @@ void smacofSSEngine(const int* nobj, const int* ndim, const int* ndat,
                     int* blks, double* wght, double* edis, double* dhat,
                     double* xold, double* xnew) {
     int Ndat = *ndat, Nobj = *nobj, Ndim = *ndim;
-    double* vinv = xmalloc(Nobj * (Nobj - 1) * sizeof(double) / 2);
     double smid = 0.0, difx = 0.0;
+    double* vinv = xmalloc(Nobj * (Nobj - 1) * sizeof(double) / 2);
     (void)smacofMPInverseV(nobj, ndat, iind, jind, wght, vinv);
     while (true) {
-        (void)smacofSSMajorize(nobj, ndim, ndat, itel, kord, nord, iind, jind, iord,
-                               safe, weighted, wght, vinv, dhat, xold, xnew);
+        (void)smacofSSMajorize(nobj, ndim, ndat, itel, kord, nord, iind, jind,
+                               iord, safe, weighted, wght, vinv, dhat, xold,
+                               xnew);
         (void)smacofSSDistances(nobj, ndim, ndat, iind, jind, xnew, edis);
         smid = smacofSSLoss(ndat, edis, dhat, wght);
         difx = 0.0;
@@ -34,13 +35,15 @@ void smacofSSEngine(const int* nobj, const int* ndim, const int* ndat,
         }
         if (*verbose) {
             if (*ordinal) {
-                printf("itel %4d kord %4d difx %*.*f sold %*.*f smid %*.*f snew %*.*f\n",
-                       *itel, *kord, *width, *digits, difx, *width, *digits, *sold,
-                       *width, *digits, smid, *width, *digits, *snew);
+                printf(
+                    "itel %4d kord %4d difx %*.*f sold %*.*f smid %*.*f snew "
+                    "%*.*f\n",
+                    *itel, *kord, *width, *digits, difx, *width, *digits, *sold,
+                    *width, *digits, smid, *width, *digits, *snew);
             } else {
-                printf("itel %4d kord %4d difx %*.*f sold %*.*f snew %*.*f\n", *itel, *kord,
-                       *width, *digits, difx, *width, *digits, *sold, *width,
-                       *digits, *snew);
+                printf("itel %4d kord %4d difx %*.*f sold %*.*f snew %*.*f\n",
+                       *itel, *kord, *width, *digits, difx, *width, *digits,
+                       *sold, *width, *digits, *snew);
             }
         }
         if ((*itel == *itmax) || (difx < *eps)) {
@@ -90,4 +93,14 @@ void matrixPrint(const double* x, const size_t Nrow, const size_t Ncol,
         printf("\n");
     }
     printf("\n\n");
+}
+
+void vectorBounds(const double* x, const size_t Nelm,
+                   const int digits, const int width) {
+    double bmin = INFINITY, bmax = -INFINITY;
+    for (size_t i = 0; i < Nelm; i++) {
+            bmin = fmin(bmin, x[i]);
+            bmax = fmax(bmax, x[i]);
+    }
+    printf(" bmin %+*.*f  bmax %+*.*f\n\n", width, digits, bmin, width, digits, bmax);
 }

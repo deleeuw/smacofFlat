@@ -39,7 +39,8 @@ papersize: letter
 graphics: true
 link-citations: true
 mainfont: Times New Roman
-abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for square symmetric data as one monolithic C program. R is used for taking care of the data and parameter setup, the I/O, and of issuing a single call to *.C()* to start the computations. This makes this new *smacofSS()* program five to fifty times as fast (for our examples) as the *smacofSym()* function from the R smacof package. Utilities for various initial configurations and plots are included in the package. Examples are included to compare output and time for the R and C versions and to illustrate the various plots.
+abstract: We rewrite the metric/nonmetric and weighted/unweighted versions of the smacof program for     square symmetric data as one monolithic C program. R is used for taking care of the data and          parameter setup, the I/O, and of issuing a single call to *.C()* to load the shared library that      does all the computations. This makes this new *smacofSS()* program five to fifty times as fast       (for our examples) as the *smacofSym()* function from the R smacof package. In addition we included    various options to
+   accelerate convergence. Utilities for various initial configurations and plots are included in the    package. Examples are included to compare output and time for the R and C versions and to             illustrate the plots and the effect of the various acceleration strategies.
 ---
 
 ```{r loadpackages, echo = FALSE}
@@ -92,11 +93,23 @@ In definition \eqref{eq-stressdef}
 
 The (unconstrained, least squares, square, symmetric, Euclidean, $p-$dimensional) MDS problem is to minimize $\sigma$ of \eqref{eq-stressdef} over all $n\times p$ configurations and over the set $\Delta\in\mathbb{R}^m_+$ of non-negative pseudo-distances.
 
+The standard iterative methods for Multidimensional Scaling (MDS), such as *smacof* (@deleeuw_mair_A_09c, @mair_groenen_deleeuw_A_22) and *ALSCAL* (@takane_young_deleeuw_A_77), can be quite slow to converge. Thus there have been various attempts to use standard numerical analysis
+techniques to accelerate MDS convergence. But none of these methods, despite of being quite successful, has been implemented in the usual MDS techniques.
+
+@ramsay_75 used multivariate Aitkin acceleration on various problems in psychometrics and statistics. including MDS.
+In @groenen_glunt_hayden_96 standard *smacof* iterations were compared with iterations of the
+spectral gradient method.
+@rosman_bronstein_bronstein_sidi_kimmel_08
+@deleeuw_R_06b
+@deleeuw_R_08i
 
 
-# MDS Data Structure
+@lepage_saucier_24
 
-Data management and algorithm initialization is handled by R (@r_core_team_25). We start with an R object of class *dist* containing dissimilarities. Here is a small example of order four.
+
+# MDS Data Structures
+
+Data management and algorithm initialization in *smacofSS()* is handled by R (@r_core_team_25). We start with an R object of class *dist* containing dissimilarities. Here is a small example of order four.
 
 ```{r small, echo = FALSE}
 small <- as.dist(matrix(
@@ -207,28 +220,31 @@ used with small modifications for alternative MDS methods such as McGee's Elasti
 The github repository has the R and C code, some utilities in R, and a small Makefile for the shared library.
 
 
+# Software 
 
-# Arguments
+## Arguments
 
-The smacofSS() function has the following arguments, with default values,
+The *smacofSS()* function has the following arguments, with default values,
 
 1.  *theData*, a *smacofSSData* object.
 2.  *ndim=2*, dimensionality of MDS analysis.
 3.  *xinit=NULL*, initial configuration, NULL or an *nobj* by *ndim* matrix.
-4.  *ties=1*, ties approach, 1, 2, or 3 for primary, secondary, tertiary.
-4.  *weighted = FALSE*, TRUE/FALSE for weighted/unweighted least squares.
-5.  *ordinal = FALSE*, FALSE for numerical,TRUE for ordinal.
-6.  *itmax = 1000*, maximum number of iterations.
-7.  *eps = 1e-10*, if stress changes less than *eps*, stop.
-8.  *digits = 10*, digits stress print if verbose is TRUE,
-9.  *width = 12*, width stress print if verbose is TRUE,
-10. *verbose = FALSE*, TRUE/FALSE print stress for each iteration to *stdout*.
+4.  *ties = 1*, ties approach, 1, 2, or 3 for primary, secondary, tertiary.
+5.  *iord = 2*, acceleration strategy, vector with integers between 0 and 3.
+6.  *safe = TRUE*, if TRUE guarantees monotone convergence.
+7.  *itmax = 1000*, maximum number of iterations.
+8.  *eps = 1e-6*, if successive configurations change less than *eps*, stop.
+9.  *digits = 10*, digits stress print if verbose is TRUE,
+10. *width = 15*, width stress print if verbose is TRUE,
+11. *verbose = TRUE*, TRUE/FALSE print stress for each iteration to *stdout*.
+12. *weighted = FALSE*, TRUE/FALSE for weighted/unweighted least squares.
+13. *ordinal = FALSE*, FALSE for numerical,TRUE for ordinal.
 
 
 
 
 
-# Value
+## Value
 
 The list of objects returned by *smacofSS()* mimics, as much as possible, the list returned by the function
 *smacofSym()* from the smacof package.
@@ -247,6 +263,7 @@ The list of objects returned by *smacofSS()* mimics, as much as possible, the li
 12. *jind*, column indices, vector of length $m$.
 13. *weighted*, was the analysis weighted.
 14. *ordinal*, was the analysis ordinal (and if so, which tie approach).
+15. *ties*, approach to ties if ordinal (one, two, or three).
 
 One important special case should be kept in mind. In the ordinal case with the primary approach to ties, the data are (potentially) reordered within tie blocks in each iteration. In each iteration we have to reorder the indices *iind*, *jind*, and in the weighted case the weights. There is no need to reorder delta and the blocks, because the only ordering changes are within blocks. Ultimately this means that if smacofSS() returns a list, then in that list *iind*, *jind*, and in the weighted case *weightmat* will be ordered differently from the corresponding columns in the MDS data structure. No reordering is going on using the secondary and tertiary approaches.
 
@@ -323,8 +340,52 @@ Our most expensive initial configuration routine is *smacofElegant()*, which imp
 
 Finally, we have the option to uses the $p$ dominant dimensions of the *full-dimensiponal* scaling solution as initial configuration. We know that full-dimensional scaling converges to the global minimum of stress in $n-1$ dimensions, and actually to the global minimum for all $p\geq r$, where $r$ is the *Gower rank* of the data (@deleeuw_E_16k). This will provide a good initial estimate if $r$ is close to $p$.
 
-### Acceleration
+## Acceleration
 
+A *iord* is a vector $\ell$ of $n\geq 1$ integers, with 
+$0\leq \ell_i\leq 3$. Strategies are used to code $n$ *updates*,
+with update $i$ has *order* $\ell_i$. Iterations repeat
+strategies cyclically. Thus iord $(0,0,3)$ means that
+iterations use updates of order $(0,0,3,0,0,3,...)$, while 
+$(1,0)$ means the order sequence $(1,0,1,0,1,0,...)$.
+The theory in @lepage_saucier_24 allows one to go to orders
+hgher than three, but we will use these in this paper.
+
+To define orders zero to three for smacof we use the Guttman transform $\Gamma$ of an MDS configuration. In iteration $k$ we compute
+\begin{subequations}
+\begin{align}
+\Delta_0^{(k)}&:=X^{(k)},\\
+\Delta_1^{(k)}&:=\Gamma(X^{(k)})-X^{(k)},\\
+\Delta_2^{(k)}&:=\Gamma^2(X^{(k)})-2\Gamma(X^{(k)})+X^{(k)},\\
+\Delta_3^{(k)}&:=\Gamma^3(X^{(k)})-3\Gamma^2(X^{(k)})+3\Gamma(X^{(k)})-X^{(k)}.
+\end{align}
+\end{subequations}
+0. Order zero are the standard smacof iterations
+\begin{equation}
+X^{(k+1)}=\Gamma(X^{(k)}).
+\end{equation}
+1. For order one
+\begin{subequations}
+\begin{align}
+\lambda_1^{(k)}&:=\frac{\langle\Delta_0^{(k)},\Delta_1^{(k)}\rangle}{\langle\Delta_1^{(k)},\Delta_1^{(k)}\rangle},\\
+X^{(k+1)}&=\Delta_0^{(k)}+\lambda_1^{(k)}\Delta_1^{(k)}.
+\end{align}
+\end{subequations}
+2. For order two
+\begin{subequations}
+\begin{align}
+\lambda_2^{(k)}&:=\frac{\langle\Delta_1^{(k)},\Delta_2^{(k)}\rangle}{\langle\Delta_2^{(k)},\Delta_2^{(k)}\rangle},\\
+X^{(k+1)}&=\Delta_0^{(k)}+2\lambda_2^{(k)}\Delta_1^{(k)}+\left[\lambda_2^{(k)}\right]^2\Delta_2^{(k)}.
+\end{align}
+\end{subequations}
+3. For order three
+\begin{subequations}
+\begin{align}
+\lambda_3^{(k)}&:=\frac{\langle\Delta_2^{(k)},\Delta_3^{(k)}\rangle}{\langle\Delta_3^{(k)},\Delta_3^{(k)}\rangle},\\
+X^{(k+1)}&=\Delta_0^{(k)}+3\lambda_3^{(k)}\Delta_1^{(k)}+3\left[\lambda_3^{(k)}\right]^2\Delta_2^{(k)}+
+\left[\lambda_3^{(k)}\right]^3\Delta_3^{(k)}.
+\end{align}
+\end{subequations}
 
 # Utilities
 
@@ -351,6 +412,9 @@ The configuration plot plots two dimensions *dim1* and *dim2* of the configurati
 
 A DistDhat-plot has distances on the horizontal axis and pseudo-distances on the vertical axes. Points are drawn using symbol *pch* in color *colpoint*. The line through the origin with slope one is drawn in color *colline*. If *fitlines* is true then black lines from the points to their orthogonal projections on the line are drawn.
 
+Residual plot
+
+## Newton
 
 
 # Example Data Sets
@@ -551,7 +615,7 @@ The conclusion is clear. For both the Ekman and the Morse example the results of
 
 ## Time
 
-The *microbenchmark* package (@mersmann_24) is mainly intended to time small pieces of code, not complete programs. Nevertheless we will use it to compare *smacofSym()* and *smacofSS()*, until something more appropriate comes along. We again use the Ekman and Morse data with default options. From the microbenchmark output we find the median time over 100 runs each of the two programs.
+The *microbenchmark* package (@mersmann_24) is mainly intended to time small pieces of code, not complete programs. Nevertheless we will use it to compare *smacofSym()* and *smacofSS()*, until something more appropriate (and equally easy to use) comes along. We again use the Ekman and Morse data with default options. From the microbenchmark output we find the median time over 100 runs each of the two programs.
 
 ```{r microbenchmark_numE, cache = TRUE, echo = FALSE}
 h <- microbenchmark(
@@ -771,6 +835,297 @@ The two examples are very different because Ekman has an excellent fit, while Mo
 examples the tertiary approach to ties leads to a perfect fit in Ekman and a near perfect fit in Morse. Morse (630 dissimilarities) is quite a bit bigger than Ekman (91 dissimilarities) and Morse has more ties (68 tie-blocks of average size about 9) than Ekman (47 tie-blocks of average size about 2). Except for tertiary Morse requires considerably more iterations than Ekman.
 
 Note, by the way, that we have used microbenchmark in such a way that smacofSS() is always run after the corresponding smacofSym(), and that the eight different basic combinations or weighted and ordinal are always run in the same order.
+
+# Comparing Strategies
+
+In this section we compare the strategies $(x)$ and $(0,x)$, where $x$
+is one of 0,1,2,3. Of course iord $(0)$ is identical to iord
+$(0,0)$, because both implement a sequence of ordinary smacof iterations. In addition we vary the *safe* parameter.
+
+
+## Data
+
+## Number of Iterations
+
+We iterate a maximum of 1000 times and we stop if the sup-norm $\|X^{(k+1)}-X^{(k)}\|_\infty$ is less than  $10^{-6}$. This is a much stricter stop citerium as the one used in *smacof*, which stops if the change in loss function value 
+$\sigma^{(k)}-\sigma^{(k+1)}$ is less than 
+$10^{-6}$. We always start with the classical scaling (Torgerson-Gower) solution.
+
+
+### Strategy (x)
+
+```{r xF, cache = TRUE, echo = FALSE}
+he0 <- smacofSS(ekmanData, iord = 0, verbose = FALSE, safe = FALSE)
+he1 <- smacofSS(ekmanData, iord = 1, verbose = FALSE, safe = FALSE)
+he2 <- smacofSS(ekmanData, iord = 2, verbose = FALSE, safe = FALSE)
+he3 <- smacofSS(ekmanData, iord = 3, verbose = FALSE, safe = FALSE)
+hg0 <- smacofSS(gruijterData, iord = 0, verbose = FALSE, safe = FALSE)
+hg1 <- smacofSS(gruijterData, iord = 1, verbose = FALSE, safe = FALSE)
+hg2 <- smacofSS(gruijterData, iord = 2, verbose = FALSE, safe = FALSE)
+hg3 <- smacofSS(gruijterData, iord = 3, verbose = FALSE, safe = FALSE)
+hm0 <- smacofSS(morseData, iord = 0, verbose = FALSE, safe = FALSE)
+hm1 <- smacofSS(morseData, iord = 1, verbose = FALSE, safe = FALSE)
+hm2 <- smacofSS(morseData, iord = 2, verbose = FALSE, safe = FALSE)
+hm3 <- smacofSS(morseData, iord = 3, verbose = FALSE, safe = FALSE)
+hF<-matrix(c(he0$niter, he1$niter, he2$niter, he3$niter,
+        hg0$niter, hg1$niter, hg2$niter, hg3$niter,
+        hm0$niter, hm1$niter, hm2$niter, hm3$niter
+        ), 3, 4, byrow = TRUE)
+row.names(hF) <- c("ekmanData", "gruijterData", "morseData")
+```
+
+```{r kxF, echo = FALSE, tab.align = "center"}
+kable(hF, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "iord (x), safe = FALSE")
+```
+
+```{r xT, cache = TRUE, echo = FALSE}
+he0 <- smacofSS(ekmanData, iord = 0, verbose = FALSE, safe = TRUE)
+he1 <- smacofSS(ekmanData, iord = 1, verbose = FALSE, safe = TRUE)
+he2 <- smacofSS(ekmanData, iord = 2, verbose = FALSE, safe = TRUE)
+he3 <- smacofSS(ekmanData, iord = 3, verbose = FALSE, safe = TRUE)
+hg0 <- smacofSS(gruijterData, iord = 0, verbose = FALSE, safe = TRUE)
+hg1 <- smacofSS(gruijterData, iord = 1, verbose = FALSE, safe = TRUE)
+hg2 <- smacofSS(gruijterData, iord = 2, verbose = FALSE, safe = TRUE)
+hg3 <- smacofSS(gruijterData, iord = 3, verbose = FALSE, safe = TRUE)
+hm0 <- smacofSS(morseData, iord = 0, verbose = FALSE, safe = TRUE)
+hm1 <- smacofSS(morseData, iord = 1, verbose = FALSE, safe = TRUE)
+hm2 <- smacofSS(morseData, iord = 2, verbose = FALSE, safe = TRUE)
+hm3 <- smacofSS(morseData, iord = 3, verbose = FALSE, safe = TRUE)
+hT<-matrix(c(he0$niter, he1$niter, he2$niter, he3$niter,
+        hg0$niter, hg1$niter, hg2$niter, hg3$niter,
+        hm0$niter, hm1$niter, hm2$niter, hm3$niter
+        ), 3, 4, byrow = TRUE)
+row.names(hT) <- c("ekmanData", "gruijterData", "morseData")
+```
+
+```{r kxT, echo = FALSE, tab.align = "center"}
+kable(hT, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "iord (x), safe = TRUE")
+```
+
+### Strategy (0,x)
+
+```{r 0xF, cache = TRUE, echo = FALSE}
+he1 <- smacofSS(ekmanData, iord = c(0,1), verbose = FALSE, safe = FALSE)
+he2 <- smacofSS(ekmanData, iord = c(0,2), verbose = FALSE, safe = FALSE)
+he3 <- smacofSS(ekmanData, iord = c(0,3), verbose = FALSE, safe = FALSE)
+hg1 <- smacofSS(gruijterData, iord = c(0,1), verbose = FALSE, safe = FALSE)
+hg2 <- smacofSS(gruijterData, iord = c(0,2), verbose = FALSE, safe = FALSE)
+hg3 <- smacofSS(gruijterData, iord = c(0,3), verbose = FALSE, safe = FALSE)
+hm1 <- smacofSS(morseData, iord = c(0,1), verbose = FALSE, safe = FALSE)
+hm2 <- smacofSS(morseData, iord = c(0,2), verbose = FALSE, safe = FALSE)
+hm3 <- smacofSS(morseData, iord = c(0,3), verbose = FALSE, safe = FALSE)
+h<-matrix(c(he0$niter, he1$niter, he2$niter, he3$niter,
+        hg0$niter, hg1$niter, hg2$niter, hg3$niter,
+        hm0$niter, hm1$niter, hm2$niter, hm3$niter
+        ), 3, 4, byrow = TRUE)
+row.names(h) <- c("ekmanData", "gruijterData", "morseData")
+```
+
+```{r k0xF, echo = FALSE, tab.align = "center"}
+kable(h, row.names = TRUE, col.names = c("(0,0)", "(0,1)", "(0,2)", "(0,3)"),
+      caption = "iord (0,x), safe = FALSE")
+```
+
+
+```{r 0xT, cache = TRUE, echo = FALSE}
+he1 <- smacofSS(ekmanData, iord = c(0,1), verbose = FALSE, safe = TRUE)
+he2 <- smacofSS(ekmanData, iord = c(0,2), verbose = FALSE, safe = TRUE)
+he3 <- smacofSS(ekmanData, iord = c(0,3), verbose = FALSE, safe = TRUE)
+hg1 <- smacofSS(gruijterData, iord = c(0,1), verbose = FALSE, safe = TRUE)
+hg2 <- smacofSS(gruijterData, iord = c(0,2), verbose = FALSE, safe = TRUE)
+hg3 <- smacofSS(gruijterData, iord = c(0,3), verbose = FALSE, safe = TRUE)
+hm1 <- smacofSS(morseData, iord = c(0,1), verbose = FALSE, safe = TRUE)
+hm2 <- smacofSS(morseData, iord = c(0,2), verbose = FALSE, safe = TRUE)
+hm3 <- smacofSS(morseData, iord = c(0,3), verbose = FALSE, safe = TRUE)
+h<-matrix(c(he0$niter, he1$niter, he2$niter, he3$niter,
+        hg0$niter, hg1$niter, hg2$niter, hg3$niter,
+        hm0$niter, hm1$niter, hm2$niter, hm3$niter
+        ), 3, 4, byrow = TRUE)
+row.names(h) <- c("ekmanData", "gruijterData", "morseData")
+```
+
+```{r k0xT, echo = FALSE, tab.align = "center"}
+kable(h, row.names = TRUE, col.names = c("(0,0)", "(0,1)", "(0,2)", "(0,3)"),
+      caption = "iord (0,x), safe = TRUE")
+```
+
+## Timing
+
+### Strategy (x)
+
+```{r mxF, echo = FALSE, cache = TRUE}
+suppressWarnings(
+h <- microbenchmark(
+smacofSS(ekmanData, iord = 0, verbose = FALSE, safe = FALSE),
+smacofSS(ekmanData, iord = 1, verbose = FALSE, safe = FALSE),
+smacofSS(ekmanData, iord = 2, verbose = FALSE, safe = FALSE),
+smacofSS(ekmanData, iord = 3, verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = 0, verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = 1, verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = 2, verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = 3, verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = 0, verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = 1, verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = 2, verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = 3, verbose = FALSE, safe = FALSE)))
+```
+
+```{r pxFR, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(1964,57315,537,532, 
+               32028, 27371, 2218,3527,
+               33178,56410,3547,4445), 3, 4, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "iord (x), safe = FALSE, language = R")
+```
+```{r pxFC, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(270,834,258,258, 
+               207, 481, 145,151,
+               1886,3821,1498,1515), 3, 4, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "iord (x), safe = FALSE, language = C")
+```
+
+```{r mxT, echo = FALSE, cache = TRUE}
+suppressWarnings(h <- microbenchmark(
+smacofSS(ekmanData, iord = 0, verbose = FALSE, safe = TRUE),
+smacofSS(ekmanData, iord = 1, verbose = FALSE, safe = TRUE),
+smacofSS(ekmanData, iord = 2, verbose = FALSE, safe = TRUE),
+smacofSS(ekmanData, iord = 3, verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = 0, verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = 1, verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = 2, verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = 3, verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = 0, verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = 1, verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = 2, verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = 3, verbose = FALSE, safe = TRUE)))
+```
+```{r pxTR, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(1974,1080,535,526, 
+               32564,24020,2089,2575,
+               32841,23130,3222,4190), 3, 4, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "iord (x), safe = TRUE, language = R")
+```
+```{r pxTC, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(283,273,266,266, 
+               228,192,156,157,
+               2187,1847,1552,1554), 3, 4, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "iord (x), safe = TRUE, language = C")
+```
+### Strategy (0,x)
+
+```{r m0xF, cache = TRUE, echo = FALSE}
+suppressWarnings(h <- microbenchmark(
+smacofSS(ekmanData, iord = c(0,1), verbose = FALSE, safe = FALSE),
+smacofSS(ekmanData, iord = c(0,2), verbose = FALSE, safe = FALSE),
+smacofSS(ekmanData, iord = c(0,3), verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = c(0,1), verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = c(0,2), verbose = FALSE, safe = FALSE),
+smacofSS(gruijterData, iord = c(0,3), verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = c(0,1), verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = c(0,2), verbose = FALSE, safe = FALSE),
+smacofSS(morseData, iord = c(0,3), verbose = FALSE, safe = FALSE)))
+```
+```{r p0xFR, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(1467,584,656,
+               26266,2910,2543,
+               26074,4162,4028), 3, 3, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0,1)", "(0,2)", "(0,3)"),
+      caption = "iord (0,x), safe = FALSE, language = R")
+```
+```{r p0xFC, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(275,270,270,
+               192,156,158,
+               1730,1496,1521), 3, 3, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0,1)", "(0,2)", "(0,3)"),
+      caption = "iord (0,x), safe = FALSE, language = C")
+```
+
+```{r m0xT, cache = TRUE, echo = FALSE}
+suppressWarnings(h <- microbenchmark(
+smacofSS(ekmanData, iord = c(0,1), verbose = FALSE, safe = TRUE),
+smacofSS(ekmanData, iord = c(0,2), verbose = FALSE, safe = TRUE),
+smacofSS(ekmanData, iord = c(0,3), verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = c(0,1), verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = c(0,2), verbose = FALSE, safe = TRUE),
+smacofSS(gruijterData, iord = c(0,3), verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = c(0,1), verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = c(0,2), verbose = FALSE, safe = TRUE),
+smacofSS(morseData, iord = c(0,3), verbose = FALSE, safe = TRUE)))
+```
+```{r p0xTR, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(1466,584,654,25584,2544,2795,25898,4103,3986), 3, 3, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0,1)", "(0,2)", "(0,3)"),
+      caption = "iord (0,x), safe = TRUE, language = R")
+```
+```{r p0xTC, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(268,264,263,190,145,149,1936,1549,1542), 3, 3, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0,1)", "(0,2)", "(0,3)"),
+      caption = "iord (0,x), safe = TRUE, language = C")
+```
+
+## Nonmetric
+
+```{r xFN, cache = TRUE, echo = FALSE}
+he0 <- smacofSS(ekmanData, iord = 0, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+he1 <- smacofSS(ekmanData, iord = 1, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+he2 <- smacofSS(ekmanData, iord = 2, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+he3 <- smacofSS(ekmanData, iord = 3, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hg0 <- smacofSS(gruijterData, iord = 0, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hg1 <- smacofSS(gruijterData, iord = 1, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hg2 <- smacofSS(gruijterData, iord = 2, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hg3 <- smacofSS(gruijterData, iord = 3, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hm0 <- smacofSS(morseData, iord = 0, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hm1 <- smacofSS(morseData, iord = 1, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hm2 <- smacofSS(morseData, iord = 2, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hm3 <- smacofSS(morseData, iord = 3, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+hF<-matrix(c(he0$niter, he1$niter, he2$niter, he3$niter,
+        hg0$niter, hg1$niter, hg2$niter, hg3$niter,
+        hm0$niter, hm1$niter, hm2$niter, hm3$niter
+        ), 3, 4, byrow = TRUE)
+row.names(hF) <- c("ekmanData", "gruijterData", "morseData")
+```
+
+```{r kxFN, echo = FALSE, tab.align = "center"}
+kable(hF, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "Nonmetric, iord (x), safe = TRUE")
+```
+
+```{r m0xTN, cache = TRUE, echo = FALSE}
+suppressWarnings(h <- microbenchmark(
+smacofSS(ekmanData, iord = 0, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(ekmanData, iord = 1, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(ekmanData, iord = 2, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(ekmanData, iord = 3, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(gruijterData, iord = 0, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(gruijterData, iord = 1, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(gruijterData, iord = 2, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(gruijterData, iord = 3, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(morseData, iord = 0, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(morseData, iord = 1, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(morseData, iord = 2, verbose = FALSE, safe = TRUE, ordinal = TRUE),
+smacofSS(morseData, iord = 3, verbose = FALSE, safe = TRUE, ordinal = TRUE)
+))
+```
+
+```{r p0xTRN, echo = FALSE, tab.align = "center"}
+mh <- matrix(c(1071,532,604,629,962,586,584,573,4022,2842, 2298, 2297), 3, 4, byrow = TRUE)
+row.names(mh) <- c("ekmanData", "gruijterData", "morseData")
+kable(mh, row.names = TRUE, col.names = c("(0)", "(1)", "(2)", "(3)"),
+      caption = "Nonmetric, iord (x), safe = TRUE")
+```
 
 # Plots
 
