@@ -33,12 +33,18 @@ structure(list(SOC = c("1", "1", "1", "1", "7", "6", "2", "4",
 
 roskamMatrix <- matrix(0, 48, 48)
 roskamWeights <- matrix(0, 48, 48)
-roskamMatrix[9 + 1:39, 1:9] <- as.numeric(as.matrix(roskam))
-roskamMatrix <- roskamMatrix + t(roskamMatrix)
-roskamWeights[9 + 1:39, 1:9] <- 1
+roskamNumeric <- matrix(as.numeric(as.matrix(roskam)), 39, 9)
+roskamMatrix[1:39, 39 + 1:9] <- roskamNumeric
+roskamMatrix <- smacofCompleteRectangular(roskamNumeric)
+dd <- roskamMatrix^2
+di <- apply(dd, 1, mean)
+dm <- mean(dd)
+dd <- -(dd - outer(di ,di, "+") + dm) / 2
+xx <- eigs_sym(dd, 2)
+roskamInit <- xx$vectors %*% diag(sqrt(xx$values))
+roskamWeights[1:39, 39 + 1:9] <- 1
 roskamWeights <- roskamWeights + t(roskamWeights)
 roskamDist <- as.dist(roskamMatrix)
 roskamWght <- as.dist(roskamWeights)
 roskamData <- makeMDSData(roskamDist, roskamWght)
-
 

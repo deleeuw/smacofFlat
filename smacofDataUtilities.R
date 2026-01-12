@@ -65,6 +65,31 @@ smacofRandomConfiguration <- function(theData, ndim = 2) {
     x - mean(x)))
 }
 
+smacofCompleteRectangular <- function(x) {
+  n <- nrow(x)
+  m <- ncol(x)
+  nm <- n + m
+  nn <- 1:n
+  mm <- 1:m
+  delta <- matrix(0, nm, nm)
+  delta[nn, n + mm] <- x
+  for (j in 1:(m - 1)) {
+    for (i in (j + 1):m) {
+      lw <- min(x[, i] + x[, j])
+      up <- max(abs(x[, i] - x[, j]))
+      delta[n + i, n + j] <- (lw + up) / 2
+    }
+  }
+  for (j in 1:(n - 1)) {
+    for (i in (j + 1):n) {
+      lw <- min(x[i, ] + x[j, ])
+      up <- max(abs(x[i, ] - x[j, ]))
+      delta[i, j] <- (lw + up) / 2
+    }
+  }
+  return(delta + t(delta))
+}
+
 matrixPrint <- function(x,
                         digits = 6,
                         width = 8,
