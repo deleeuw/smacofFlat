@@ -17,6 +17,9 @@ smacofSS <- function(theData,
                      verbose = TRUE,
                      weighted = FALSE,
                      ordinal = FALSE) {
+  if ((1 == iord) && !safe) {
+    stop("for the relaxed update with iord equal to 1, safe must be true")
+  }
   if (is.null(xinit)) {
     xinit <- smacofTorgerson(theData, ndim)$conf
   }
@@ -30,6 +33,12 @@ smacofSS <- function(theData,
   jind <- theData$jind
   dhat <- theData$delta
   wght <- theData$weights
+  if ((length(wght) < choose(nobj, 2)) && !weighted) {
+    stop("if data are incomplete, weighted must be TRUE")
+  }
+  if ((any(1 != wght)) && !weighted) {
+    stop("if any weight is not equal to one, weighted must be TRUE")
+  }
   if (!weighted) {
     wght <- rep(1, ndat)
   }
