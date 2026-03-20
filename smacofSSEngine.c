@@ -95,12 +95,13 @@ void matrixPrint(const double* x, const size_t Nrow, const size_t Ncol,
     printf("\n\n");
 }
 
-void vectorBounds(const double* x, const size_t Nelm,
-                   const int digits, const int width) {
+void vectorBounds(const double* x, const size_t Nelm, const int digits,
+                  const int width) {
     double bmin = INFINITY, bmax = -INFINITY;
     for (size_t i = 0; i < Nelm; i++) {
-            bmin = fmin(bmin, x[i]);
-            bmax = fmax(bmax, x[i]);
+        bmin = fmin(bmin, x[i]);
+        bmax = fmax(bmax, x[i]);
     }
-    printf(" bmin %+*.*f  bmax %+*.*f\n\n", width, digits, bmin, width, digits, bmax);
+    printf(" bmin %+*.*f  bmax %+*.*f\n\n", width, digits, bmin, width, digits,
+           bmax);
 }

@@ -1,5 +1,6 @@
 
-SSRC = smacofIsotone.c smacofMPInverseV.c smacofSort.c smacofSSEngine.c smacofSSMajorize.c smacofSSMonotone.c
+SSRC = smacofIsotone.c smacofMPInverseV.c smacofSort.c smacofSSEngine.c smacofSSMajorize.c smacofSSMonotone.c \
+	syminv.c cholesky.c timestamp.c
 
 %.o: %.c smacofSS.h
 	clang -c $@

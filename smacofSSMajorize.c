@@ -111,7 +111,7 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
     for (int k = 0; k < Ndat; k++) {
         int i = iind[k], j = jind[k];
         if (edis[k] < EPS) {
-          continue;
+            continue;
         }
         double ecof = wght[k] * dhat[k] / edis[k];
         for (int s = 0; s < Ndim; s++) {
@@ -128,12 +128,10 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
             xnew[k] = xtmp[k];
         }
     }
-    // here follows a bug
     if (Weighted) {
-        /*
          for (int k = 0; k < Ndat; k++) {
             int i = iind[k], j = jind[k];
-            double ecof = -vinv[k];
+            double ecof = vinv[k];
             for (int s = 0; s < Ndim; s++) {
                 int iobj = i + Nobj * s, jobj = j + Nobj * s;
                 double add = ecof * (xtmp[iobj] - xtmp[jobj]);
@@ -141,20 +139,6 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
                 xnew[jobj] -= add;
             }
         }
-        */
-      int k = 0;
-      for (int j = 0; j < Nobj - 1; j++) {
-        for (int i = j + 1; i < Nobj; i++) {
-          double ecof = -vinv[k];
-          for (int s = 0; s < Ndim; s++) {
-            int iobj = i + Nobj * s, jobj = j + Nobj * s;
-            double add = ecof * (xtmp[iobj] - xtmp[jobj]);
-            xnew[iobj] += add;
-            xnew[jobj] -= add;
-          }          
-          k++;
-        }
-      }
     } else {
         for (int i = 0; i < Nobj; i++) {
             int is = i;

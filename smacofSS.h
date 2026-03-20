@@ -13,6 +13,9 @@
 #define EPS 1e-15
 #define true 1
 #define false 0
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 
 // in smacofIsotone.c
 
@@ -28,6 +31,14 @@ void matrixPrint(const double* x, const size_t Nrow, const size_t Ncol,
                  const int digits, const int width);
 void vectorBounds(const double* x, const size_t Nelm,
                  const int digits, const int width);
+
+void smacofSSSMatrixPrint(double *mat, int *nobj, int *ndat, 
+  int *iind, int *jind, int *width, int *digits);
+
+void smacofSSRMatrixPrint(double *mat, int* nrow, int* ncol, 
+  int* width, int* digits);
+
+void smacofSSVectorPrint(double* vec, int* n, int* width, int* digits);
   
 // in smacofSort.c
 
@@ -37,7 +48,7 @@ void mySort(double* x, double* w, double* d, int* iind, int* jind,
 
 // in smacofMPInverseV.c
 
-void smacofMPInverseV(const int* nobj, const int* ndat, int* iind, int* jind, double* wght,
+void smacofMPInverseV(const int* nobj, const int* ndat, const int* iind, const int* jind, const double* wght,
                       double* vinv);
 
 // in smacofSSEngine.c
@@ -76,6 +87,13 @@ void smacofSSDistances(const int* nobj, const int* ndim, const int* ndat, int* i
 void smacofSSMonotone(const int* ndat, const int* ties, int* iind, int* jind, int* blks,
                       double* edis, double* dhat, double* wght);
 
+void cholesky ( double a[], int n, int nn, double u[], int *nullty, 
+  int *ifault );
+
+void syminv ( double a[], int n, double c[], double w[], int *nullty, 
+  int *ifault );
+
+void timestamp (void);
 
 
 static inline void *xmalloc(const size_t size) {
