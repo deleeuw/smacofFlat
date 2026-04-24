@@ -131,7 +131,7 @@ void smacofSSGuttmanTransform(const int* nobj, const int* ndim, const int* ndat,
     if (Weighted) {
          for (int k = 0; k < Ndat; k++) {
             int i = iind[k], j = jind[k];
-            double ecof = vinv[k];
+            double ecof = -vinv[k];
             for (int s = 0; s < Ndim; s++) {
                 int iobj = i + Nobj * s, jobj = j + Nobj * s;
                 double add = ecof * (xtmp[iobj] - xtmp[jobj]);

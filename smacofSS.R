@@ -57,7 +57,7 @@ smacofSS <- function(theData,
   xold <- lbd * xold
   sold <- sum(wght * (dhat - edis)^2)
   snew <- 0.0
-  xold <- as.vector(xold)
+  # xold <- as.vector(xold)
   xnew <- xold
   h <- .C(
     "smacofSSEngine",
@@ -93,6 +93,7 @@ smacofSS <- function(theData,
     dhat = h$dhat,
     confdist = h$edis,
     conf = matrix(h$xnew, nobj, ndim),
+    oconf = matrix(h$xold, nobj, ndim),
     weightmat = h$wght,
     stress = h$snew,
     ndim = ndim,
