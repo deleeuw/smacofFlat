@@ -109,6 +109,7 @@
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
 
 \usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -267,6 +268,10 @@
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
 \hypersetup{
   pdftitle={Yet Another Smacof - Square Symmetric Case},
   pdfauthor={Jan de Leeuw},
@@ -280,7 +285,7 @@
 
 \title{Yet Another Smacof - Square Symmetric Case}
 \author{Jan de Leeuw}
-\date{January 11, 2026}
+\date{October 25, 2026}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -300,7 +305,6 @@ strategies.
 
 \renewcommand*\contentsname{Table of contents}
 {
-\hypersetup{linkcolor=}
 \setcounter{tocdepth}{3}
 \tableofcontents
 }
@@ -318,13 +322,13 @@ Objects can be anything: people, animals, molecules, locations, time
 points, stimuli, political parties, and so on. We have information about
 the \emph{similarities} or \emph{dissimilarities} of some or all of the
 \(\binom{n}{2}\) pairs of objects. Say we have information about \(m\)
-dissimilarities \(\delta_k\), with \(k=1,\cdots m\). Thus each index
-\(k\) refers to a pair of indices \((i,j)\), with \(1\leq i\leq n\) and
-\(1\leq j\leq n\). The information is of the form \(\delta\in\Delta\),
-where \(\Delta\) is a known subset of the non-negative orthant of
-\(\mathbb{R}^m\). If the dissimilarities are known numbers and
-\(\Delta\) has only a single element the MDS problem is \emph{metric},
-in all other cases the problem is \emph{non-metric}.
+dissimilarities \(\delta_k\), with \(k = 1,\cdots m\). Thus each index
+\(k\) refers to a pair of indices \((i,j)\), with \(1 \leq i \leq n\)
+and \(1 \leq j \leq n\). The information is of the form
+\(\delta \in \Delta\), where \(\Delta\) is a known subset of the
+non-negative orthant of \(\mathbb{R}^m\). If the dissimilarities are
+known numbers and \(\Delta\) has only a single element the MDS problem
+is \emph{metric}, in all other cases the problem is \emph{non-metric}.
 
 In MDS we want to map the objects into \emph{points} in
 \(p\)-dimensional Euclidean space in such a way that the distances
@@ -332,17 +336,16 @@ In MDS we want to map the objects into \emph{points} in
 The quality of the approximation is given by the least squares loss
 function\footnote{The symbol $:=$ is used for definitions.}
 \begin{equation}
-\sigma(X,\Delta):=\frac{\sum_{k=1}^mw_k(\delta_k-d_k(X))^2}{\sum_{k=1}^mw_k\delta_k^2},
-\label{eq-stressdef}
+  \sigma(X,\Delta) := \frac{\sum_{k=1}^mw_k(\delta_k - d_k(X))^2}{\sum_{k=1}^mw_k\delta_k^2}, \label{eq-stressdef}
 \end{equation} Traditionally, this loss function is called \emph{stress}
 (Kruskal (\citeproc{ref-kruskal_64a}{1964a}), Kruskal
 (\citeproc{ref-kruskal_64b}{1964b})). It is true that in Kruskal's paper
 there are no weights and the sum of squares of the distances is in the
 denominator. It is shown in Kruskal and Carroll
-(\citeproc{ref-kruskal_carroll_69}{1969}), and in more detail in De
-Leeuw (\citeproc{ref-deleeuw_U_75a}{1975}), that the solution of the MDS
-problem for the different denominators are the same, up a scale constant
-which is irrelevant for MDS.
+(\citeproc{ref-kruskal_carroll_69}{1969}), and in more detail in {de
+Leeuw} (\citeproc{ref-deleeuw_U_75a}{1975}), that the solution of the
+MDS problem for the different denominators are the same, up a scale
+constant which is irrelevant for MDS.
 
 In definition \eqref{eq-stressdef}
 
@@ -353,7 +356,7 @@ In definition \eqref{eq-stressdef}
 \item
   \(w_k\) are \(m\) positive \emph{weights};
 \item
-  \(X\) is an \(n\times p\) \emph{configuration}, with coordinates of
+  \(X\) is an \(n \times p\) \emph{configuration}, with coordinates of
   \(n\) \emph{points} in \(\mathbb{R}^p\);
 \item
   \(d_k(X)\) are the (Euclidean) \emph{distances} between the rows of
@@ -361,29 +364,28 @@ In definition \eqref{eq-stressdef}
 \end{itemize}
 
 The (unconstrained, least squares, square, symmetric, Euclidean,
-\(p-\)dimensional) MDS problem is to minimize \(\sigma\) of
-\eqref{eq-stressdef} over all \(n\times p\) configurations and over the
-set \(\Delta\in\mathbb{R}^m_+\) of non-negative pseudo-distances.
+\(p -\)dimensional) MDS problem is to minimize \(\sigma\) of
+\eqref{eq-stressdef} over all \(n \times p\) configurations and over the
+set \(\Delta \in \mathbb{R}^m_+\) of non-negative pseudo-distances.
 
 The standard iterative methods for Multidimensional Scaling (MDS), such
 as \emph{smacof} (De Leeuw and Mair
-(\citeproc{ref-deleeuw_mair_A_09c}{2009}), Mair, Groenen, and De Leeuw
+(\citeproc{ref-deleeuw_mair_A_09c}{2009}), {Mair et al.}
 (\citeproc{ref-mair_groenen_deleeuw_A_22}{2022})) and \emph{ALSCAL}
-(Takane, Young, and De Leeuw
-(\citeproc{ref-takane_young_deleeuw_A_77}{1977})), can be quite slow to
-converge. Thus there have been various attempts to use standard
-numerical analysis techniques to accelerate MDS convergence. But none of
-these methods, despite of being quite successful, has been implemented
-in the usual MDS techniques.
+({Takane et al.} (\citeproc{ref-takane_young_deleeuw_A_77}{1977})), can
+be quite slow to converge. Thus there have been various attempts to use
+standard numerical analysis techniques to accelerate MDS convergence.
+But none of these methods, despite of being quite successful, has been
+implemented in the usual MDS techniques.
 
 Ramsay (\citeproc{ref-ramsay_75}{1975}) used multivariate Aitkin
 acceleration on various problems in psychometrics and statistics.
-including MDS. In Groenen, Glunt, and Hayden
+including MDS. In Groenen et al.
 (\citeproc{ref-groenen_glunt_hayden_96}{1996}) standard \emph{smacof}
 iterations were compared with iterations of the spectral gradient
 method. Rosman et al.
-(\citeproc{ref-rosman_bronstein_bronstein_sidi_kimmel_08}{2008}) De
-Leeuw (\citeproc{ref-deleeuw_R_06b}{2006}) De Leeuw
+(\citeproc{ref-rosman_bronstein_bronstein_sidi_kimmel_08}{2008}) {de
+Leeuw} (\citeproc{ref-deleeuw_R_06b}{2006}) {de Leeuw}
 (\citeproc{ref-deleeuw_R_08i}{2008})
 
 Lepage-Saucier (\citeproc{ref-lepage_saucier_24}{2024})
@@ -565,22 +567,22 @@ in other ways, and to edit the objects generated by
 transforming weights/dissimilarities. As long as the conventions are
 obeyed that no index pair \((i,j)\) occurs more than once, that the
 dissimilarities remain sorted, and that the tie-blocks faithfully
-reflect ties in the sorted dissimilarities. We do need \(i\neq j\), but
-it is not necessary that always \(i>j\).
+reflect ties in the sorted dissimilarities. We do need \(i \neq j\), but
+it is not necessary that always \(i > j\).
 
 \section{Computation}\label{computation}
 
 We minimize stress from \eqref{eq-stressdef} by minimizing its numerator
-\(\smash{\sum_{k=1}^m w_k(\delta_k-d_k(X))^2}\) over the \(n\times p\)
-configurations \(X\) and over \(\delta\in\Delta\cap\mathcal{S}\), where
-\(\mathcal{S}\) is set of all vectors in \(\mathbb{R}^m\) with
-\(\smash{\sum_{k=1}^mw_k\delta_k^2=1}\). In De Leeuw
+\(\smash{\sum_{k=1}^m w_k(\delta_k-d_k(X))^2}\) over the \(n \times p\)
+configurations \(X\) and over \(\delta \in \Delta \cap \mathcal{S}\),
+where \(\mathcal{S}\) is set of all vectors in \(\mathbb{R}^m\) with
+\(\smash{\sum_{k=1}^mw_k\delta_k^2=1}\). In {de Leeuw}
 (\citeproc{ref-deleeuw_U_75a}{1975}) this is called \emph{explicit
 normalization} (of the disparities) to contrast it with the
 \emph{implicit normalization} in \eqref{eq-stressdef}. It is also shown
-in De Leeuw (\citeproc{ref-deleeuw_U_75a}{1975}) that explicit and
+in {de Leeuw} (\citeproc{ref-deleeuw_U_75a}{1975}) that explicit and
 implicit normalization give the same solution for \(\delta\) and \(X\)
-up to a scale constant. See also Bauschke, Bui, and Wang
+up to a scale constant. See also Bauschke et al.
 (\citeproc{ref-bauschke_bui_wang_18}{2018}).
 
 The default initial configuration for the iterations is the classical
@@ -589,7 +591,7 @@ dissimilarities. Smacof algorithms for MDS use \emph{Alternating Least
 Squares (ALS)} iterations to minimize stress. ALS is a form of block
 relaxation applied to least squares loss functions. Specific cases of
 ALS have been around for a long time. But as a general class of
-techniques it was introduced in De Leeuw
+techniques it was introduced in {de Leeuw}
 (\citeproc{ref-deleeuw_R_68d}{1968}), where it was also given its name.
 If there are two blocks of variables we alternate finding the optimum
 for the variables in the first block, with those in the second block
@@ -605,12 +607,12 @@ Finding the optimal \(X\) for given \(\delta\) means solving a metric
 MDS problem. The vector \(\delta\) is fixed throughout the computations,
 in other words \(\Delta\) is a singleton, a set with one element. To
 solve the optimum \(X\) subproblem we use \emph{majorization}, which was
-introduced to MDS by De Leeuw (\citeproc{ref-deleeuw_C_77}{1977}). The
+introduced to MDS by {de Leeuw} (\citeproc{ref-deleeuw_C_77}{1977}). The
 majorization details are now in many places, for example in Borg and
 Groenen (\citeproc{ref-borg_groenen_05}{2005}) or Groenen and Van de
 Velden (\citeproc{ref-groenen_vandevelden_16}{2016}). Although
 majorization in metric MDS does not use ALS, it is a form of block
-relaxation (De Leeuw (\citeproc{ref-deleeuw_C_94c}{1994})) that also
+relaxation ({de Leeuw} (\citeproc{ref-deleeuw_C_94c}{1994})) that also
 proceeds by solving a sequence of relatively simple least squares
 problems.
 
@@ -618,25 +620,24 @@ In the non-metric case finding the optimum \(\delta\) for fixed \(X\),
 and thus fixed \(d(X)\), is a \emph{monotone regression} problem, i.e.~a
 linear least squares problem with monotonicity constraints on the
 parameters. There is a huge literature on monotone regression and the
-\emph{Pool Adjacent Violators Algorithm (PAVA)} reviewed in De Leeuw,
-Hornik, and Mair (\citeproc{ref-deleeuw_hornik_mair_A_09}{2009}). In the
-MDS context it suffices to refer to Kruskal
-(\citeproc{ref-kruskal_64b}{1964b}).
+\emph{Pool Adjacent Violators Algorithm (PAVA)} reviewed in De Leeuw et
+al. (\citeproc{ref-deleeuw_hornik_mair_A_09}{2009}). In the MDS context
+it suffices to refer to Kruskal (\citeproc{ref-kruskal_64b}{1964b}).
 
 In our implementation of smacof we alternate one majorization step with
 one monotone regression step. Thus in the first phase we make only one
 step towards the conditional minimum over \(X\), while in the second
 phase we go all the way to the conditional minimum over \(\delta\) .
 There may be some improvement possible by making more majorization steps
-in the first phase, or by using the over-relaxation step proposed by De
-Leeuw and Heiser (\citeproc{ref-deleeuw_heiser_C_80}{1980}). However,
+in the first phase, or by using the over-relaxation step proposed by {de
+Leeuw and Heiser} (\citeproc{ref-deleeuw_heiser_C_80}{1980}). However,
 these possible accelerations have not been implemented yet.
 
 In the non-metrix case our algorithm is quite different from that in
 Kruskal (\citeproc{ref-kruskal_64a}{1964a}), Kruskal
 (\citeproc{ref-kruskal_64b}{1964b}). Kruskal defines his non-metric
 stress as \begin{equation}
-\sigma(X):=\min_{\delta\in\Delta}\frac{\sum_{k=1}^mw_k(\delta_k-d_k(X))^2}{\sum_{k=1}^mw_kd_k^2(X)}.
+  \sigma(X) := \min_{\delta \in \Delta}\frac{\sum_{k=1}^mw_k(\delta_k - d_k(X))^2}{\sum_{k=1}^mw_kd_k^2(X)}.
 \end{equation} This stress is a function of \(X\) only, which is then
 minimized by a gradient method with a complicated step-size procedure.
 In Guttman's terminology this is a \emph{one-phase} procedure. Even in
@@ -653,8 +654,8 @@ routine \emph{smacofSSEngine()}. The C routine \emph{smacofSSEngine()}
 alternates calls to the compiled C routines \emph{smacofSSMajorize()}
 and \emph{smacofSSMonotone()}. Because of this modularity the same code
 can be used with small modifications for alternative MDS methods such as
-McGee's Elastic Scaling and Sammon Mapping (De Leeuw
-(\citeproc{ref-deleeuw_E_25f}{2025a}), De Leeuw
+McGee's Elastic Scaling and Sammon Mapping ({de Leeuw}
+(\citeproc{ref-deleeuw_E_25f}{2025a}), {de Leeuw}
 (\citeproc{ref-deleeuw_E_25g}{2025b})).
 
 The github repository has the R and C code, some utilities in R, and a
@@ -720,7 +721,7 @@ smacof package.
 \item
   \emph{confdist}, final distances, vector of length \(m\).
 \item
-  \emph{conf}, final configuration, \(n\times p\) matrix.
+  \emph{conf}, final configuration, \(n \times p\) matrix.
 \item
   \emph{weightmat}, weights, vector of length \(m\).
 \item
@@ -728,7 +729,7 @@ smacof package.
 \item
   \emph{ndim}, number of dimensions.
 \item
-  \emph{init}, initial configuration, \(n\times p\) matrix..
+  \emph{init}, initial configuration, \(n \times p\) matrix..
 \item
   \emph{niter}, number of iterations.
 \item
@@ -777,21 +778,22 @@ ordinal case an additional \emph{.C()} call to update the
 pseudo-distances. This turned out to be unsatisfactory, because it did
 not give enough speedup compared to the \emph{smacofSym()} in the
 \emph{smacof} package on CRAN (De Leeuw and Mair
-(\citeproc{ref-deleeuw_mair_A_09c}{2009}), Mair, Groenen, and De Leeuw
+(\citeproc{ref-deleeuw_mair_A_09c}{2009}), {Mair et al.}
 (\citeproc{ref-mair_groenen_deleeuw_A_22}{2022})).
 
 \subsection{Majorization}\label{majorization}
 
-The majorization updates are of the form \(X\leftarrow V^+B(X)X\), where
-\(V\) and \(B(X)\) are symmetric doubly-centered matrices. Matrix \(V\)
-is constant and has off-diagonal elements \(-w_{ij}\), matrix \(B(X)\)
-has off-diagonal elements \(-w_{ij}\delta_{ij}/d_{ij}(X)\). Matrix
-\(V^+\) is a generalized inverse of \(V\). For details see, for example,
-De Leeuw and Heiser (\citeproc{ref-deleeuw_heiser_C_80}{1980}) or De
-Leeuw (\citeproc{ref-deleeuw_A_88b}{1988}). If the weights are
-irreducible, which we can assume without loss of generality (De Leeuw
+The majorization updates are of the form \(X \leftarrow V^+B(X)X\),
+where \(V\) and \(B(X)\) are symmetric doubly-centered matrices. Matrix
+\(V\) is constant and has off-diagonal elements \(-w_{ij}\), matrix
+\(B(X)\) has off-diagonal elements \(-w_{ij}\delta_{ij}/d_{ij}(X)\).
+Matrix \(V^+\) is a generalized inverse of \(V\). For details see, for
+example, {de Leeuw and Heiser}
+(\citeproc{ref-deleeuw_heiser_C_80}{1980}) or {de Leeuw}
+(\citeproc{ref-deleeuw_A_88b}{1988}). If the weights are irreducible,
+which we can assume without loss of generality ({de Leeuw}
 (\citeproc{ref-deleeuw_C_77}{1977})), then \begin{equation}
-V^+=(V+\frac{1}{n}ee')^{-1}-\frac{1}{n}ee'
+  V^+ = (V + \frac{1}{n}ee')^{-1} - \frac{1}{n}ee'
 \end{equation} can be used to efficiently compute the Moore-Penrose
 inverse. In the unweighted case we can simply set
 \(\smash{V^+=\frac{1}{n}I}\).
@@ -827,13 +829,13 @@ The initial configuration routines are written in R. They are
 \tightlist
 \item
   \emph{smacofTorgerson(theData, ndim)}. Returns initial configuration
-  in \(nobj\times ndim\) matrix using classical MDS.
+  in \(nobj \times ndim\) matrix using classical MDS.
 \item
   \emph{smacofGuttman(theData, ndim)}. Returns the Guttman-Lingoes
-  initial configuration in \(nobj\times ndim\) matrix.
+  initial configuration in \(nobj \times ndim\) matrix.
 \item
   \emph{smacofElegant(theData, ndim)}. Returns the ``elegant'' initial
-  configuration in \(nobj\times ndim\) matrix.
+  configuration in \(nobj \times ndim\) matrix.
 \end{enumerate}
 
 They all need the first \emph{ndim} eigenvalues with the corresponding
@@ -860,8 +862,7 @@ The initial configuration routines all are based on finding a solution
 with a good value of \emph{sstress}, defined in the same way as stress,
 but with squared distances and dissimilarities. Thus sstress is
 \begin{equation}
-\sigma(X,\Delta):=\frac{\sum_{k=1}^mw_k(\delta_k^2-d_k^2(X))^2}{\sum_{k=1}^mw_k\delta_k^4}.
-\label{eq-sstressdef}
+  \sigma(X,\Delta) := \frac{\sum_{k=1}^mw_k(\delta_k^2 - d_k^2(X))^2}{\sum_{k=1}^mw_k\delta_k^4}. \label{eq-sstressdef}
 \end{equation} The \emph{smacofSSResult} returned by the initial
 configuration routines has an sstress value, instead of a stress value.
 Of source the stress value of the sulution will be revealed when it is
@@ -890,8 +891,7 @@ configuration a dimension less than \(p\), and since smacof iterations
 never increase dimensionality this will mean the final configuration
 will also have dimension less than \(p\). Thus the Torgerson initial
 configuration is unsuitable, for example, for full-dimensional scaling
-(De Leeuw, Groenen, and Mair
-(\citeproc{ref-deleeuw_groenen_mair_E_16e}{2016})).
+({de Leeuw et al.} (\citeproc{ref-deleeuw_groenen_mair_E_16e}{2016})).
 
 \subsubsection{Guttman}\label{sec-guttman}
 
@@ -903,21 +903,21 @@ related to Hayashi's Quantification Method IV (Takane
 not have a negative eigenvalue problem.
 
 Write sstress as \begin{equation}
-\sigma(X)=K-2\sum_{k=1}^mw_k\delta_k^2d_k^2(X)+\sum_{k=1}^mw_kd_k^4(X).
+  \sigma(X) = K - 2\sum_{k=1}^mw_k\delta_k^2d_k^2(X) + \sum_{k=1}^mw_kd_k^4(X).
 \end{equation} By homogeneity this is scale-equivalent to maximizing the
 middle term over all configurations for which the third term is one. The
 middle term is equal to \(\text{tr}\ X'BX\), where \(B\) is
 doubly-centered with off-diagonal elements \(-d_{ij}^2(X)\). Note that
 \(B\) is positive semi-definite. The third term
 \(\smash{\sum_{k=1}^mw_kd_k^4(X)}\) is a homogeneous quartic in \(X\),
-or equivalently a homogeneous quadratic in the elements of \(C=XX'\). In
-the \emph{elegant} algorithm, discussed in Section~\ref{sec-elegant}, we
-majorize this quadratic to arrive at a simpler unweighted quadratic in
-\(C\). In the Guttman initial configuration we maximize the middle term
-using the alternative quartic constraint
-\(\text{tr}\ (X'X)^2=\text{tr}\ C^2=1\). Note that the \(B\) takes
+or equivalently a homogeneous quadratic in the elements of \(C = XX'\).
+In the \emph{elegant} algorithm, discussed in Section~\ref{sec-elegant},
+we majorize this quadratic to arrive at a simpler unweighted quadratic
+in \(C\). In the Guttman initial configuration we maximize the middle
+term using the alternative quartic constraint
+\(\text{tr}\ (X'X)^2 = \text{tr}\ C^2 = 1\). Note that the \(B\) takes
 weights and missing data into account, but the normalization constraint
-does not. The stationary equations are \(BX=X(X'X)\) and thus the
+does not. The stationary equations are \(BX = X(X'X)\) and thus the
 maximum is attained for \(\smash{X=K\Lambda^\frac12}\), where
 \(\Lambda\) are the \(p\) dominant eigenvalues of \(B\) and \(K\) are
 the corresponding eigenvalues.
@@ -926,7 +926,7 @@ the corresponding eigenvalues.
 
 Our most expensive initial configuration routine is
 \emph{smacofElegant()}, which implements an optimized version of De
-Leeuw's 1975 ``elegant'' algorithm, as described recently in De Leeuw
+Leeuw's 1975 ``elegant'' algorithm, as described recently in {de Leeuw}
 (\citeproc{ref-deleeuw_E_25c}{2025c}). \emph{smacofElegant()} is a
 stand-alone iterative metric scaling method, implemented in R. Using
 \emph{smacofElegant()} means a lot of computation just to obtain an
@@ -939,15 +939,15 @@ possible, because that is the best guarantee against local minima.
 Finally, we have the option to uses the \(p\) dominant dimensions of the
 \emph{full-dimensiponal} scaling solution as initial configuration. We
 know that full-dimensional scaling converges to the global minimum of
-stress in \(n-1\) dimensions, and actually to the global minimum for all
-\(p\geq r\), where \(r\) is the \emph{Gower rank} of the data (De Leeuw
-(\citeproc{ref-deleeuw_E_16k}{2016})). This will provide a good initial
-estimate if \(r\) is close to \(p\).
+stress in \(n - 1\) dimensions, and actually to the global minimum for
+all \(p \geq r\), where \(r\) is the \emph{Gower rank} of the data ({de
+Leeuw} (\citeproc{ref-deleeuw_E_16k}{2016})). This will provide a good
+initial estimate if \(r\) is close to \(p\).
 
 \subsection{Acceleration}\label{acceleration}
 
-A \emph{iord} is a vector \(\ell\) of \(n\geq 1\) integers, with
-\(0\leq \ell_i\leq 3\). Strategies are used to code \(n\)
+A \emph{iord} is a vector \(\ell\) of \(n \geq 1\) integers, with
+\(0 \leq \ell_i \leq 3\). Strategies are used to code \(n\)
 \emph{updates}, with update \(i\) has \emph{order} \(\ell_i\).
 Iterations repeat strategies cyclically. Thus iord \((0,0,3)\) means
 that iterations use updates of order \((0,0,3,0,0,3,...)\), while
@@ -958,31 +958,31 @@ to orders hgher than three, but we will use these in this paper.
 To define orders zero to three for smacof we use the Guttman transform
 \(\Gamma\) of an MDS configuration. In iteration \(k\) we compute
 \begin{subequations}
-\begin{align}
-\Delta_0^{(k)}&:=X^{(k)},\\
-\Delta_1^{(k)}&:=\Gamma(X^{(k)})-X^{(k)},\\
-\Delta_2^{(k)}&:=\Gamma^2(X^{(k)})-2\Gamma(X^{(k)})+X^{(k)},\\
-\Delta_3^{(k)}&:=\Gamma^3(X^{(k)})-3\Gamma^2(X^{(k)})+3\Gamma(X^{(k)})-X^{(k)}.
-\end{align}
+  \begin{align}
+    \Delta_0^{(k)} & := X^{(k)},                                                             \\
+    \Delta_1^{(k)} & := \Gamma(X^{(k)}) - X^{(k)},                                           \\
+    \Delta_2^{(k)} & := \Gamma^2(X^{(k)}) - 2\Gamma(X^{(k)}) + X^{(k)},                      \\
+    \Delta_3^{(k)} & := \Gamma^3(X^{(k)}) - 3\Gamma^2(X^{(k)}) + 3\Gamma(X^{(k)}) - X^{(k)}.
+  \end{align}
 \end{subequations} 0. Order zero are the standard smacof iterations
 \begin{equation}
-X^{(k+1)}=\Gamma(X^{(k)}).
+  X^{(k+1)} = \Gamma(X^{(k)}).
 \end{equation} 1. For order one \begin{subequations}
-\begin{align}
-\lambda_1^{(k)}&:=\frac{\langle\Delta_0^{(k)},\Delta_1^{(k)}\rangle}{\langle\Delta_1^{(k)},\Delta_1^{(k)}\rangle},\\
-X^{(k+1)}&=\Delta_0^{(k)}+\lambda_1^{(k)}\Delta_1^{(k)}.
-\end{align}
+  \begin{align}
+    \lambda_1^{(k)} & := \frac{\langle\Delta_0^{(k)},\Delta_1^{(k)}\rangle}{\langle\Delta_1^{(k)},\Delta_1^{(k)}\rangle}, \\
+    X^{(k+1)}       & = \Delta_0^{(k)} + \lambda_1^{(k)}\Delta_1^{(k)}.
+  \end{align}
 \end{subequations} 2. For order two \begin{subequations}
-\begin{align}
-\lambda_2^{(k)}&:=\frac{\langle\Delta_1^{(k)},\Delta_2^{(k)}\rangle}{\langle\Delta_2^{(k)},\Delta_2^{(k)}\rangle},\\
-X^{(k+1)}&=\Delta_0^{(k)}+2\lambda_2^{(k)}\Delta_1^{(k)}+\left[\lambda_2^{(k)}\right]^2\Delta_2^{(k)}.
-\end{align}
+  \begin{align}
+    \lambda_2^{(k)} & := \frac{\langle\Delta_1^{(k)},\Delta_2^{(k)}\rangle}{\langle\Delta_2^{(k)},\Delta_2^{(k)}\rangle}, \\
+    X^{(k+1)}       & = \Delta_0^{(k)} + 2\lambda_2^{(k)}\Delta_1^{(k)} + \left[ \lambda_2^{(k)} \right]^2\Delta_2^{(k)}.
+  \end{align}
 \end{subequations} 3. For order three \begin{subequations}
-\begin{align}
-\lambda_3^{(k)}&:=\frac{\langle\Delta_2^{(k)},\Delta_3^{(k)}\rangle}{\langle\Delta_3^{(k)},\Delta_3^{(k)}\rangle},\\
-X^{(k+1)}&=\Delta_0^{(k)}+3\lambda_3^{(k)}\Delta_1^{(k)}+3\left[\lambda_3^{(k)}\right]^2\Delta_2^{(k)}+
-\left[\lambda_3^{(k)}\right]^3\Delta_3^{(k)}.
-\end{align}
+  \begin{align}
+    \lambda_3^{(k)} & := \frac{\langle\Delta_2^{(k)},\Delta_3^{(k)}\rangle}{\langle\Delta_3^{(k)},\Delta_3^{(k)}\rangle},   \\
+    X^{(k+1)}       & = \Delta_0^{(k)} + 3\lambda_3^{(k)}\Delta_1^{(k)} + 3\left[ \lambda_3^{(k)} \right]^2\Delta_2^{(k)} +
+    \left[ \lambda_3^{(k)} \right]^3\Delta_3^{(k)}.
+  \end{align}
 \end{subequations}
 
 \section{Utilities}\label{utilities}
@@ -1047,6 +1047,8 @@ slope one is drawn in color \emph{colline}. If \emph{fitlines} is true
 then black lines from the points to their orthogonal projections on the
 line are drawn.
 
+Residual plot
+
 \subsection{Newton}\label{newton}
 
 \section{Example Data Sets}\label{example-data-sets}
@@ -1099,16 +1101,16 @@ which means a two-dimensional solution with unweighted and numerical
 options.
 
 We start with the Ekman data, which have a very good fit in two
-dimensions. From the Torgerson initial configuration we need 25
+dimensions. From the Torgerson initial configuration we need 7
 iterations to converge to stress 0.0172132. From the Guttman initial
-configuration stress is 0.0172132 after 27 iterations. And from elegant
-we use 23 iterations to arrive at 0.0172132.
+configuration stress is 0.0172132 after 6 iterations. And from elegant
+we use 6 iterations to arrive at 0.0172132.
 
 We repeat this for the Gruijter data, which have a poor fit in two
-dimensions. From the Torgerson initial configuration we need 318
-iterations to converge to stress 0.0446034. From the Guttman initial
-configuration stress is 0.0444297 after 315 iterations. And from elegant
-we use 322 iterations to arrive at 0.0444297.
+dimensions. From the Torgerson initial configuration we need 21
+iterations to converge to stress 0.0267299. From the Guttman initial
+configuration stress is 0.0267299 after 16 iterations. And from elegant
+we use 22 iterations to arrive at 0.0187831.
 
 For both Ekman and Gruijter it seems that smacofSS() arrives at the same
 solution, no matter which initial configuration we use. There is some
@@ -1128,8 +1130,8 @@ purposes we square it again. All runs are started with the
 two-dimensional Torgerson solution and have the stop criteria \emph{eps}
 equal to \ensuremath{10^{-10}} and \emph{itmax} equal to 1000 (except
 when using the tertiary approach when \emph{itmax} is 10000). In the
-weighted case the weights for Ekman are \(w_k=\delta_k^2\), for Morse
-they are \(w_k=\delta_k^{-1}\).
+weighted case the weights for Ekman are \(w_k = \delta_k^2\), for Morse
+they are \(w_k = \delta_k^{-1}\).
 
 \begin{longtable}[]{@{}lcccc@{}}
 \caption{Comparison smacofSym() and smacofSS() results Ekman
@@ -1144,14 +1146,14 @@ data}\tabularnewline
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-unweighted numerical & 0.0172132 & 25 & 0.0172132 & 25 \\
-unweighted ordinal ties = 1 & 0.0005337 & 103 & 0.0005337 & 103 \\
-unweighted ordinal ties = 2 & 0.0009977 & 51 & 0.0009977 & 51 \\
-unweighted ordinal ties = 3 & 0.0000001 & 2556 & 0.0000001 & 2556 \\
-weighted numerical & 0.0105187 & 22 & 0.0086555 & 21 \\
-weighted ordinal ties = 1 & 0.0003205 & 78 & 0.0003205 & 78 \\
-weighted ordinal ties = 2 & 0.0007063 & 64 & 0.0007063 & 64 \\
-weighted ordinal ties = 3 & 0.0000002 & 4650 & 0.0000002 & 4650 \\
+unweighted numerical & 0.5067831 & 198 & 0.0172132 & 12 \\
+unweighted ordinal ties = 1 & 0.1221884 & 375 & 0.0005337 & 101 \\
+unweighted ordinal ties = 2 & 0.1280550 & 290 & 0.0009977 & 86 \\
+unweighted ordinal ties = 3 & 0.0077821 & 403 & 0.0000000 & 5965 \\
+weighted numerical & 0.0361753 & 1000 & 0.0172132 & 13 \\
+weighted ordinal ties = 1 & 0.0124109 & 848 & 0.0005337 & 102 \\
+weighted ordinal ties = 2 & 0.0122130 & 1000 & 0.0009977 & 86 \\
+weighted ordinal ties = 3 & 0.0034770 & 490 & 0.0000000 & 5965 \\
 \end{longtable}
 
 \begin{longtable}[]{@{}lcccc@{}}
@@ -1167,14 +1169,14 @@ data}\tabularnewline
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-unweighted numerical & 0.0899492 & 238 & 0.0899492 & 238 \\
-unweighted ordinal ties = 1 & 0.0326557 & 143 & 0.0326557 & 143 \\
-unweighted ordinal ties = 2 & 0.0406405 & 135 & 0.0406405 & 135 \\
-unweighted ordinal ties = 3 & 0.0000018 & 351 & 0.0000018 & 351 \\
-weighted numerical & 0.0977124 & 317 & 0.1152147 & 320 \\
-weighted ordinal ties = 1 & 0.0346208 & 117 & 0.0346208 & 117 \\
-weighted ordinal ties = 2 & 0.0425777 & 99 & 0.0425777 & 99 \\
-weighted ordinal ties = 3 & 0.0000025 & 289 & 0.0000025 & 289 \\
+unweighted numerical & 0.0899492 & 238 & 0.0899492 & 40 \\
+unweighted ordinal ties = 1 & 0.0326557 & 143 & 0.0326557 & 75 \\
+unweighted ordinal ties = 2 & 0.0406405 & 135 & 0.0406405 & 69 \\
+unweighted ordinal ties = 3 & 0.0000018 & 351 & 0.0000003 & 1000 \\
+weighted numerical & 0.0977124 & 317 & 0.0899492 & 39 \\
+weighted ordinal ties = 1 & 0.0346208 & 117 & 0.0326557 & 74 \\
+weighted ordinal ties = 2 & 0.0425777 & 99 & 0.0406405 & 71 \\
+weighted ordinal ties = 3 & 0.0000025 & 289 & 0.0000003 & 1000 \\
 \end{longtable}
 
 The conclusion is clear. For both the Ekman and the Morse example the
@@ -1206,14 +1208,14 @@ Data}\tabularnewline
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-unweighted numerical & 84337.0 & 987423.5 & 11.70807 \\
-unweighted ordinal ties = 1 & 99999.0 & 5530551.5 & 55.30607 \\
-unweighted ordinal ties = 2 & 85198.0 & 1918492.5 & 22.51805 \\
-unweighted ordinal ties = 3 & 168305.0 & 101810421.0 & 604.91620 \\
-weighted numerical & 87207.0 & 917375.0 & 10.51951 \\
-weighted ordinal ties = 1 & 105349.5 & 4332859.5 & 41.12843 \\
-weighted ordinal ties = 2 & 89995.0 & 2398131.0 & 26.64738 \\
-weighted ordinal ties = 3 & 173040.5 & 188350843.0 & 1088.47838 \\
+unweighted numerical & 172364.0 & 13924932 & 80.787940 \\
+unweighted ordinal ties = 1 & 797142.5 & 11881042 & 14.904539 \\
+unweighted ordinal ties = 2 & 234192.0 & 10036513 & 42.855917 \\
+unweighted ordinal ties = 3 & 885928.0 & 7436190 & 8.393674 \\
+weighted numerical & 188395.0 & 33761552 & 179.206202 \\
+weighted ordinal ties = 1 & 876047.0 & 53566869 & 61.146113 \\
+weighted ordinal ties = 2 & 301801.0 & 25726250 & 85.242426 \\
+weighted ordinal ties = 3 & 1086151.5 & 45658892 & 42.037314 \\
 \end{longtable}
 
 The entries in the table for the tertiary approach are suspect, because
@@ -1236,14 +1238,14 @@ data}\tabularnewline
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-unweighted numerical & 1095950 & 15995289 & 14.594901 \\
-unweighted ordinal ties = 1 & 4059308 & 15567884 & 3.835109 \\
-unweighted ordinal ties = 2 & 1360646 & 9056510 & 6.656035 \\
-unweighted ordinal ties = 3 & 3152634 & 25514054 & 8.092934 \\
-weighted numerical & 1393877 & 21178530 & 15.193973 \\
-weighted ordinal ties = 1 & 3405398 & 11178630 & 3.282620 \\
-weighted ordinal ties = 2 & 1110157 & 6335607 & 5.706947 \\
-weighted ordinal ties = 3 & 2593230 & 20426159 & 7.876726 \\
+unweighted numerical & 575045.5 & 13514564 & 23.501729 \\
+unweighted ordinal ties = 1 & 1595248.5 & 13668170 & 8.568051 \\
+unweighted ordinal ties = 2 & 814506.0 & 7036030 & 8.638402 \\
+unweighted ordinal ties = 3 & 7182626.0 & 20621524 & 2.871028 \\
+weighted numerical & 639415.5 & 17259258 & 26.992241 \\
+weighted ordinal ties = 1 & 1679852.0 & 10715104 & 6.378600 \\
+weighted ordinal ties = 2 & 948719.5 & 5291808 & 5.577843 \\
+weighted ordinal ties = 3 & 8865676.0 & 17507922 & 1.974798 \\
 \end{longtable}
 
 We see that for the Morse data \emph{smacofSS()} is 3 to 15 times faster
@@ -1300,10 +1302,10 @@ iterations. In addition we vary the \emph{safe} parameter.
 \subsection{Number of Iterations}\label{number-of-iterations}
 
 We iterate a maximum of 1000 times and we stop if the sup-norm
-\(\|X^{(k+1)}-X^{(k)}\|_\infty\) is less than \(10^{-6}\). This is a
+\(\|X^{(k+1)} - X^{(k)}\|_\infty\) is less than \(10^{-6}\). This is a
 much stricter stop citerium as the one used in \emph{smacof}, which
 stops if the change in loss function value
-\(\sigma^{(k)}-\sigma^{(k+1)}\) is less than \(10^{-6}\). We always
+\(\sigma^{(k)} - \sigma^{(k+1)}\) is less than \(10^{-6}\). We always
 start with the classical scaling (Torgerson-Gower) solution.
 
 \subsubsection{Strategy (x)}\label{strategy-x}
@@ -1320,9 +1322,9 @@ start with the classical scaling (Torgerson-Gower) solution.
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-ekmanData & 27 & 1000 & 7 & 6 \\
-gruijterData & 208 & 1000 & 21 & 24 \\
-morseData & 202 & 1000 & 28 & 23 \\
+ekmanData & 27 & 15 & 7 & 6 \\
+gruijterData & 208 & 116 & 21 & 24 \\
+morseData & 202 & 114 & 28 & 23 \\
 \end{longtable}
 
 \begin{longtable}[]{@{}lrrrr@{}}
@@ -1658,8 +1660,8 @@ many deviations from monotonicity.
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
 
-\phantomsection\label{refs}
-\begin{CSLReferences}{1}{0}
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
 \bibitem[\citeproctext]{ref-anderson_36}
 Anderson, Edgar. 1936. {``The Species Problem in Iris.''} \emph{Annals
 of the Missouri Botanical Garden} 23: 457--509.
@@ -1681,87 +1683,91 @@ O(n) PAVA Implementation.}''} \emph{Journal of Statistical Software} 102
 \url{https://www.jstatsoft.org/index.php/jss/article/view/v102c01/4306}.
 
 \bibitem[\citeproctext]{ref-degruijter_67}
-De Gruijter, Dato N. M. 1967. {``{The Cognitive Structure of Dutch
-Political Parties in 1966}.''} Report E019-67. Psychological Institute,
-University of Leiden.
+De Gruijter, Dato N. M. 1967. \emph{{The Cognitive Structure of Dutch
+Political Parties in 1966}}. Report Nos. E019-67. Psychological
+Institute, University of Leiden.
 
 \bibitem[\citeproctext]{ref-deleeuw_R_68d}
-De Leeuw, Jan. 1968. {``Nonmetric Discriminant Analysis.''} Research
-Note 06-68. Department of Data Theory, University of Leiden.
-\url{https://jansweb.netlify.app/publication/deleeuw-r-68-d/deleeuw-r-68-d.pdf}.
+{de Leeuw, Jan}. 1968. \emph{{Nonmetric Discriminant Analysis}}.
+Research Note Nos. 06-68. Department of Data Theory, University of
+Leiden.
+\url{https://deleeuw.github.io/janspubs/deleeuw-r-68-d/deleeuw-r-68-d.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_U_75a}
----------. 1975. {``{A Normalized Cone Regression Approach to
+{de Leeuw, Jan}. 1975. {``{A Normalized Cone Regression Approach to
 Alternating Least Squares Algorithms}.''} Department of Data Theory
 FSW/RUL.
-\url{https://jansweb.netlify.app/publication/deleeuw-u-75-a/deleeuw-u-75-a.pdf}.
+\url{https://deleeuw.github.io/janspubs/deleeuw-u-75-a/deleeuw-u-75-a.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_C_77}
----------. 1977. {``Applications of Convex Analysis to Multidimensional
-Scaling.''} In \emph{Recent Developments in Statistics}, edited by J. R.
-Barra, F. Brodeau, G. Romier, and B. Van Cutsem, 133--45. Amsterdam, The
-Netherlands: North Holland Publishing Company.
+{de Leeuw, Jan}. 1977. {``{Applications of Convex Analysis to
+Multidimensional Scaling}.''} In \emph{Recent Developments in
+Statistics}, edited by J. R. Barra, F. Brodeau, G. Romier, and B. Van
+Cutsem. North Holland Publishing Company.
+\url{https://deleeuw.github.io/janspubs/deleeuw-c-77/deleeuw-c-77.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_A_88b}
----------. 1988. {``Convergence of the Majorization Method for
-Multidimensional Scaling.''} \emph{Journal of Classification} 5:
+{de Leeuw, Jan}. 1988. {``{Convergence of the Majorization Method for
+Multidimensional Scaling}.''} \emph{Journal of Classification} 5:
 163--80.
+\url{https://deleeuw.github.io/janspubs/deleeuw-a-88-b/deleeuw-a-88-b.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_C_94c}
----------. 1994. {``{Block Relaxation Algorithms in Statistics}.''} In
-\emph{Information Systems and Data Analysis}, edited by H. H. Bock, W.
-Lenski, and M. M. Richter, 308--24. Berlin: Springer Verlag.
-\url{https://jansweb.netlify.app/publication/deleeuw-c-94-c/deleeuw-c-94-c.pdf}.
+{de Leeuw, Jan}. 1994. {``{Block Relaxation Algorithms in
+Statistics}.''} In \emph{Information Systems and Data Analysis}, edited
+by H. H. Bock, W. Lenski, and M. M. Richter. Springer Verlag.
+\url{https://deleeuw.github.io/janspubs/deleeuw-c-94-c/deleeuw-c-94-c.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_R_06b}
----------. 2006. {``{Accelerated Least Squares Multidimensional
-Scaling}.''} Preprint Series 493. Los Angeles, CA: UCLA Department of
-Statistics.
-\url{https://jansweb.netlify.app/publication/deleeuw-r-06-b/deleeuw-r-06-b.pdf}.
+{de Leeuw, Jan}. 2006. \emph{{Accelerated Least Squares Multidimensional
+Scaling}}. Preprint Series No. 493. UCLA Department of Statistics.
+\url{https://deleeuw.github.io/janspubs/deleeuw-r-06-b/deleeuw-r-06-b.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_R_08i}
----------. 2008. {``Polynomial Extrapolation to Accelerate Fixed Point
-Algorithms.''} Preprint Series 542. Los Angeles, CA: UCLA Department of
+{de Leeuw, Jan}. 2008. \emph{{Polynomial Extrapolation to Accelerate
+Fixed Point Algorithms}}. Preprint Series No. 542. UCLA Department of
 Statistics.
-\url{https://jansweb.netlify.app/publication/deleeuw-r-08-i/deleeuw-r-08-i.pdf}.
+\url{https://deleeuw.github.io/janspubs/deleeuw-r-08-i/deleeuw-r-08-i.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_E_16k}
----------. 2016. {``Gower Rank.''} 2016.
-\url{https://jansweb.netlify.app/publication/deleeuw-e-16-k/deleeuw-e-16-k.pdf}.
+{de Leeuw, Jan}. 2016. {``{Gower Rank}.''}
+\url{https://deleeuw.github.io/janspubs/deleeuw-e-16-k/deleeuw-e-16-k.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_E_25f}
----------. 2025a. {``Non-Metric Elastic MDS.''} 2025.
-\url{https://jansweb.netlify.app/publication/deleeuw-e-25-f/deleeuw-e-25-f.pdf}.
+{de Leeuw, Jan}. 2025a. {``{Metric/Non-metric Elastic MDS}.''}
+\url{https://deleeuw.github.io/janspubs/deleeuw-e-25-f/deleeuw-e-25-f.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_E_25g}
----------. 2025b. {``Non-Metric Sammon Mapping.''} 2025.
-\url{https://jansweb.netlify.app/publication/deleeuw-e-25-g/deleeuw-e-25-g.pdf}.
+{de Leeuw, Jan}. 2025b. {``{Metric/Non-metric Sammon Mapping}.''}
+\url{https://deleeuw.github.io/janspubs/deleeuw-e-25-g/deleeuw-e-25-g.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_E_25c}
----------. 2025c. {``Squared Distance Scaling.''} 2025.
-\url{https://jansweb.netlify.app/publication/deleeuw-e-25-c/deleeuw-e-25-c.pdf}.
+{de Leeuw, Jan}. 2025c. {``{Squared Distance Scaling}.''}
+\url{https://deleeuw.github.io/janspubs/deleeuw-e-25-c/deleeuw-e-25-c.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_groenen_mair_E_16e}
-De Leeuw, Jan, Patrick J. F. Groenen, and Patrick Mair. 2016.
-{``Full-Dimensional Scaling.''} 2016.
-\url{https://jansweb.netlify.app/publication/deleeuw-groenen-mair-e-16-e/deleeuw-groenen-mair-e-16-e.pdf}.
+{de Leeuw, Jan, Patrick J. F. Groenen, and Patrick Mair}. 2016.
+{``{Full-dimensional Scaling}.''}
+\url{https://deleeuw.github.io/janspubs/deleeuw-groenen-mair-e-16-e/deleeuw-groenen-mair-e-16-e.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_heiser_C_80}
-De Leeuw, Jan, and Willem J. Heiser. 1980. {``Multidimensional Scaling
-with Restrictions on the Configuration.''} In \emph{Multivariate
-Analysis, Volume {V}}, edited by P. R. Krishnaiah, 501--22. Amsterdam,
-The Netherlands: North Holland Publishing Company.
+{de Leeuw, Jan, and Willem J. Heiser}. 1980. {``{Multidimensional
+Scaling with Restrictions on the Configuration}.''} In
+\emph{Multivariate Analysis, Volume {V}}, edited by P. R. Krishnaiah.
+North Holland Publishing Company.
+\url{https://deleeuw.github.io/janspubs/deleeuw-heiser-c-80/deleeuw-heiser-c-80.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_hornik_mair_A_09}
 De Leeuw, Jan, Kurt Hornik, and Patrick Mair. 2009. {``{Isotone
 Optimization in R: Pool-Adjacent-Violators Algorithm (PAVA) and Active
 Set Methods}.''} \emph{Journal of Statistical Software} 32 (5): 1--24.
+\url{https://deleeuw.github.io/janspubs/deleeuw-hornik-mair-a-09/deleeuw-hornik-mair-a-09.pdf}.
 
 \bibitem[\citeproctext]{ref-deleeuw_mair_A_09c}
 De Leeuw, Jan, and Patrick Mair. 2009. {``{Multidimensional Scaling
 Using Majorization: SMACOF in R}.''} \emph{Journal of Statistical
 Software} 31 (3): 1--30.
-\url{https://www.jstatsoft.org/article/view/v031i03}.
+\url{https://deleeuw.github.io/janspubs/deleeuw-mair-a-09-c/deleeuw-mair-a-09-c.pdf}.
 
 \bibitem[\citeproctext]{ref-ekman_54}
 Ekman, Gosta. 1954. {``{Dimensions of Color Vision}.''} \emph{Journal of
@@ -1773,10 +1779,10 @@ Problems.''} \emph{Annals of Eugenics} 7: 179--88.
 \url{https://onlinelibrary.wiley.com/doi/epdf/10.1111/j.1469-1809.1936.tb02137.x}.
 
 \bibitem[\citeproctext]{ref-groenen_glunt_hayden_96}
-Groenen, Patrick J. F., W. Glunt, and T. L. Hayden. 1996. {``Fast
+Groenen, Patrick J. F., W. Glunt, and T. L. Hayden. 1996. \emph{Fast
 Algorithms for Multidimensional Scaling: A Comparison of Majorization
-and Spectral Gradient Methods.''} Department of Data Theory, University
-of Leiden.
+and Spectral Gradient Methods}. Department of Data Theory, University of
+Leiden.
 
 \bibitem[\citeproctext]{ref-groenen_vandevelden_16}
 Groenen, Patrick J. F., and Michel Van de Velden. 2016.
@@ -1795,14 +1801,13 @@ Goodness of Fit to a Nonmetric Hypothesis}.''} \emph{Psychometrika} 29:
 1--27.
 
 \bibitem[\citeproctext]{ref-kruskal_64b}
----------. 1964b. {``{Nonmetric Multidimensional Scaling: a Numerical
-Method}.''} \emph{Psychometrika} 29: 115--29.
+Kruskal, Joseph B. 1964b. {``{Nonmetric Multidimensional Scaling: a
+Numerical Method}.''} \emph{Psychometrika} 29: 115--29.
 
 \bibitem[\citeproctext]{ref-kruskal_carroll_69}
 Kruskal, Joseph B., and J. Douglas Carroll. 1969. {``{Geometrical Models
 and Badness of Fit Functions}.''} In \emph{Multivariate Analysis, Volume
-II}, edited by P. R. Krishnaiah, 639--71. North Holland Publishing
-Company.
+II}, edited by P. R. Krishnaiah. North Holland Publishing Company.
 
 \bibitem[\citeproctext]{ref-lepage_saucier_24}
 Lepage-Saucier, Nicolas. 2024. {``Alternating Cyclic Vector
@@ -1812,10 +1817,10 @@ Computational and Applied Mathematics} 439: 1--27.
 \url{https://doi.org/10.1016/j.cam.2023.115607}.
 
 \bibitem[\citeproctext]{ref-mair_groenen_deleeuw_A_22}
-Mair, Patrick, Patrick J. F. Groenen, and Jan De Leeuw. 2022. {``{More
+{Mair, Patrick, Patrick J. F. Groenen, and Jan de Leeuw}. 2022. {``{More
 on Multidimensional Scaling in R: smacof Version 2}.''} \emph{Journal of
 Statistical Software} 102 (10): 1--47.
-\url{https://www.jstatsoft.org/article/view/v102i10}.
+\url{https://deleeuw.github.io/janspubs/mair-groenen-deleeuw-a-22/mair-groenen-deleeuw-a-22.pdf}.
 
 \bibitem[\citeproctext]{ref-mersmann_24}
 Mersmann, Olaf. 2024. \emph{{microbenchmark: Accurate Timing
@@ -1828,7 +1833,7 @@ Large-Scale Eigenvalue and SVD Problems}}.
 
 \bibitem[\citeproctext]{ref-r_core_team_25}
 R Core Team. 2025. \emph{R: A Language and Environment for Statistical
-Computing}. {Vienna, Austria}: R Foundation for Statistical Computing.
+Computing}. R Foundation for Statistical Computing.
 \url{https://www.R-project.org/}.
 
 \bibitem[\citeproctext]{ref-ramsay_75}
@@ -1837,8 +1842,8 @@ Data Analysis.''} \emph{Psychometrika} 40: 337--60.
 
 \bibitem[\citeproctext]{ref-rosman_bronstein_bronstein_sidi_kimmel_08}
 Rosman, Guy, Michael M. Bronstein, Alexander M. Bronstein, Avram Sidi,
-and Ron Kimmel. 2008. {``Fast Multidimensional Scaling Using Vector
-Extrapolation.''} Technical Report CIS-2008 01. Technion - Computer
+and Ron Kimmel. 2008. \emph{Fast Multidimensional Scaling Using Vector
+Extrapolation}. Technical Report CIS-2008 01. Technion - Computer
 Science Department.
 \url{https://www.researchgate.net/publication/265141771_Fast_Multidimensional_Scaling_using_Vector_Extrapolation}.
 
@@ -1852,20 +1857,21 @@ Takane, Yoshio. 1977. {``{On the Relations among Four Methods of
 Multidimensional Scaling}.''} \emph{Behaviormetrika} 4: 29--42.
 
 \bibitem[\citeproctext]{ref-takane_young_deleeuw_A_77}
-Takane, Yoshio, Forrest W. Young, and Jan De Leeuw. 1977. {``Nonmetric
-Individual Differences in Multidimensional Scaling: An Alternating Least
-Squares Method with Optimal Scaling Features.''} \emph{Psychometrika}
-42: 7--67.
+{Takane, Yoshio, Forrest W. Young, and Jan de Leeuw}. 1977.
+{``{Nonmetric Individual Differences in Multidimensional Scaling: An
+Alternating Least Squares Method with Optimal Scaling Features}.''}
+\emph{Psychometrika} 42: 7--67.
+\url{https://deleeuw.github.io/janspubs/takane-young-deleeuw-a-77/takane-young-deleeuw-a-77.pdf}.
 
 \bibitem[\citeproctext]{ref-torgerson_58}
-Torgerson, Warren S. 1958. \emph{{Theory and Methods of Scaling}}. New
-York: Wiley.
+Torgerson, Warren S. 1958. \emph{{Theory and Methods of Scaling}}.
+Wiley.
 
 \bibitem[\citeproctext]{ref-wish_71}
 Wish, Myron. 1971. {``Individual Differences in Perceptions and
 Preferences Among Nations.''} In \emph{Attitude Research Reaches New
-Heights}, edited by C. W. King and D. Tigert, 312--28. American
-Marketing Association.
+Heights}, edited by C. W. King and D. Tigert. American Marketing
+Association.
 
 \end{CSLReferences}
 

@@ -17,9 +17,9 @@ smacofSS <- function(theData,
                      verbose = TRUE,
                      weighted = FALSE,
                      ordinal = FALSE) {
-  if ((1 == iord) && !safe) {
-    stop("for the relaxed update with iord equal to 1, safe must be true")
-  }
+#  if ((1 == iord) && !safe) {
+#    stop("for the relaxed update with iord equal to 1, safe must be true")
+#  }
   if (is.null(xinit)) {
     xinit <- smacofTorgerson(theData, ndim)$conf
   }
